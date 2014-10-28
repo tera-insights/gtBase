@@ -1,0 +1,55 @@
+## Inputs and outputs should both be un-named character vectors.
+Aggregate <- function(data, gla, inputs, outputs, states = NULL) {
+  schema <- set.names(convert.outputs(outputs), outputs)
+  gla <- convert.args(gla, schema)
+  check.inputs(data, inputs)
+  alias <- get.alias("gla")
+
+  aggregate <- list(data = data, alias = alias, gla = gla, inputs = inputs,
+                    schema = schema, states = states)
+  class(aggregate) <- c("GLA", "data")
+  aggregate
+}
+
+Transform <- function(data, gt, inputs, outputs, states = NULL) {
+  check.inputs(data, inputs)
+
+  alias <- get.alias("gt")
+
+  outputs <- set.names(convert.outputs(outputs), outputs)
+  schema <- c(data$schema, outputs)
+
+  transform <- list(data = data, alias = alias, gt = gt, inputs = inputs,
+                    schema = schema, states = states, outputs = outputs)
+  class(transform) <- c("GT", "data")
+  transform
+}
+
+Generate <- function(data, ...) {
+  args <- as.list(substitute(list(...)))[-1]
+  atts <- names(args)
+  if (is.null(atts) || any(atts == ""))
+    Stop("There are missing names for the generated attributes.")
+  if (any(bad <- atts %in% names(data$schema)))
+    Stop("cannot perform generation due to the following name clashes:\n",
+         paste0("\t", atts[bad], collapse = "\n"))
+
+  exprs <- unlist(lapply(args, convert.exprs, data))
+  check.inputs(data, exprs)
+
+  generated <- convert.outputs(exprs)
+
+  schema <- c(data$schema, set.names(generated, atts))
+  alias <- get.alias("projection")
+  generator <- list(data = data, alias = alias, schema = schema, generated = generated)
+  class(generator) <- c("Generated", "data")
+  generator
+}
+
+Input <- function(data, alias, gi, schema, types = NULL, relation = NULL) {
+  schema <- set.names(convert.outputs(outputs), outputs)
+  input <- list(data = data, alias = alias, gi = gi, schema = schema,
+                types = types, relation = relation)
+  class(input) <- c("GI", "data")
+  input
+}

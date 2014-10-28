@@ -1,0 +1,10 @@
+Package: gtBase
+Type: Package
+Title: R Interface for the Grokit System
+Version: 1.0
+Date: 2013-11-21
+Author: Who wrote it
+Maintainer: Who to complain to <yourfault@somewhere.net>
+Description: R Interface for the Grokit System
+License: What license is it under?
+Depends: rjson
