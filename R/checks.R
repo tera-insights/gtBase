@@ -15,9 +15,11 @@ check.atts <- function(attributes, auto = TRUE) {
     Stop("AUTO used illegally.")
 }
 
-check.exprs <- function(expressions) {
+check.exprs <- function(expressions, auto = TRUE) {
   if (!(length(expressions) == 1 || is.call(expressions)))
     Stop("expressions specified incorrectly.")
+  else if (is.auto(expressions) && !auto)
+    Stop("AUTO used illegally.")
 }
 
 check.inputs <- function(x, schema) {
