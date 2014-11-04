@@ -18,6 +18,14 @@ View.data <- function(data, ...) {
   quit(save = "no")
 }
 
+WriteCSV <- function(data, file, ...) {
+  expressions <- as.list(substitute(list(...)))[-1]
+  atts <- name.exprs(expressions, data)
+
+  GetResult(data, "csv", atts, file)
+}
+
+
 as.data.frame.data <- function(data, ...) {
   expressions <- as.list(substitute(list(...)))[-1]
   atts <- name.exprs(expressions, data)
@@ -67,14 +75,15 @@ Test <- function(data, message, ...) {
   grokit$tests <- c(grokit$tests, result)
 }
 
-GetResult <- function(data, type, inputs) {
+GetResult <- function(data, type, inputs, result) {
   ## Creating piggy should not change any fields of grokit permanently
   copy <- as.environment(as.list(grokit, all.names = TRUE))
   on.exit(grokit <- as.environment(as.list(copy, all.names = TRUE)))
   file <- tempfile("Q", getwd(), ".")
   pgy <- paste0(file, "pgy")
   err <- paste0(file, "err") ## for the error
-  result <- paste0(file, type)
+  if (missing(result))
+    result <- paste0(file, type)
   grokit$waypoints <- character()
   piggy <- Translate.Print(data, inputs, type, result)
   run(piggy, pgy, err)
