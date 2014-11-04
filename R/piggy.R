@@ -263,6 +263,8 @@ Translate.Expr.character <- function(expr, data) quotate(gsub('"', '\\\\"', expr
 
 Translate.Expr.Date <- function(expr, data) gsub(" 0", " ", format(expr, "DATE(%Y, %m, %d)"))
 
+Translate.Expr.POSIXlt <- Translate.Expr.POSIXct <- function(expr, data) as.integer(expr)
+
 Translate.Expr.default <- function(expr, data) expr
 
 Translate.Expr.if <- function(expr, data) {
