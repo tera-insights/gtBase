@@ -1,3 +1,4 @@
+## convert.args is used to rename template that make use of inputs names to include the long names.
 convert.args <- function(arg, renaming) UseMethod("convert.args")
 
 convert.args.attribute <- function(att, renaming) {
