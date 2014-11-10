@@ -29,9 +29,6 @@ convert.type <- function(type) UseMethod("convert.type")
 convert.type.default <- function(type)
   Stop("Incorrectly specified type: ", type)
 
-convert.type.logical <- function(type)
-  TYPE(bool)
-
 convert.type.call <- function(type) {
   if (is.call.to(type, "::") && all(is.symbols(as.list(type)))) {
     eval(as.call(c(substitute(TYPE), type)))
@@ -50,6 +47,9 @@ convert.type.factor <- function(type)
 convert.type.integer <- function(type)
   TYPE(int)
 
+convert.type.logical <- function(type)
+  TYPE(bool)
+
 convert.type.name <- function(type)
   eval(call("TYPE", type))
 
@@ -62,14 +62,15 @@ convert.type.character <- function(type)
 convert.types <- function(types) UseMethod("convert.types")
 
 convert.types.default <- function(types) {
-  convert.types(list(types))
+  convert.types(list(types))[[1]]
 }
 
 convert.types.call <- function(types) {
+  args <- as.list(types)[-1]
   if (is.call.to(types, "c"))
-    convert.types(as.list(types)[-1])
+    args <- ifelse(lapply(args, is.language), lapply(args, convert.types), args)
   else
-    convert.types(list(types))
+    convert.types(list(types))[[1]]
 }
 
 convert.types.list <- function(types) {
