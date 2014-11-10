@@ -8,7 +8,10 @@ Sum <- function(data, inputs = AUTO, outputs = AUTO) {
   outputs <- substitute(outputs)
   check.atts(outputs)
   if (is.auto(outputs))
-    outputs <- paste0("V", 0:(length(inputs) - 1))
+    if (is.symbols(grokit$expressions[inputs]))
+      outputs <- unlist(lapply(as.character, grokit$expressions[inputs]))
+    else
+      Stop("outputs can only be AUTO when inputs are all attributes.");
   else
     outputs <- convert.atts(outputs)
   if (length(outputs) != length(inputs))
@@ -28,9 +31,14 @@ Average <- function(data, inputs = AUTO, outputs = AUTO) {
   outputs <- substitute(outputs)
   check.atts(outputs)
   if (is.auto(outputs))
-    outputs <- paste0("V", 0:(length(inputs) - 1))
+    if (is.symbols(grokit$expressions[inputs]))
+      outputs <- unlist(lapply(as.character, grokit$expressions[inputs]))
+    else
+      Stop("outputs can only be AUTO when inputs are all attributes.");
   else
     outputs <- convert.atts(outputs)
+  if (length(outputs) != length(inputs))
+    Stop("There must be exactly one output specified per input.")
 
   agg <- Aggregate(data, GLA(Average), inputs, outputs)
   agg
@@ -48,5 +56,51 @@ Count <- function(data, outputs = count) {
 
   gla <- GLA(Count)
   agg <- Aggregate(data, gla, character(), outputs)
+  agg
+}
+
+Min <- function(data, inputs = AUTO, outputs = AUTO) {
+  inputs <- substitute(inputs)
+  check.exprs(inputs)
+  if (is.auto(inputs))
+    inputs <- convert.schema(data$schema)
+  inputs <- convert.exprs(inputs)
+
+  outputs <- substitute(outputs)
+  check.atts(outputs)
+  if (is.auto(outputs))
+    if (is.symbols(grokit$expressions[inputs]))
+      outputs <- unlist(lapply(as.character, grokit$expressions[inputs]))
+    else
+      Stop("outputs can only be AUTO when inputs are all attributes.");
+  else
+    outputs <- convert.atts(outputs)
+  if (length(outputs) != length(inputs))
+    Stop("There must be exactly one output specified per input.")
+
+  agg <- Aggregate(data, GLA(Min), inputs, outputs)
+  agg
+}
+
+Max <- function(data, inputs = AUTO, outputs = AUTO) {
+  inputs <- substitute(inputs)
+  check.exprs(inputs)
+  if (is.auto(inputs))
+    inputs <- convert.schema(data$schema)
+  inputs <- convert.exprs(inputs)
+
+  outputs <- substitute(outputs)
+  check.atts(outputs)
+  if (is.auto(outputs))
+    if (is.symbols(grokit$expressions[inputs]))
+      outputs <- unlist(lapply(as.character, grokit$expressions[inputs]))
+    else
+      Stop("outputs can only be AUTO when inputs are all attributes.");
+  else
+    outputs <- convert.atts(outputs)
+  if (length(outputs) != length(inputs))
+    Stop("There must be exactly one output specified per input.")
+
+  agg <- Aggregate(data, GLA(Max), inputs, outputs)
   agg
 }
