@@ -36,11 +36,11 @@ ReadCSV <- function(file, attributes, types, skip = 0, sep = ",",
                     simple = FALSE, chunk = NULL, nullable = FALSE,
                     header = FALSE, nrows = 10000, ...) {
   if (!is.numeric(skip) || skip < 0 || skip != floor(skip))
-    Stop("Skip in ReadCSV must be a non-negative integer.")
+    Stop("skip in ReadCSV must be a non-negative integer.")
   if (length(sep) != 1 || !is.character(sep))
-    Stop("Sep should be a length 1 character vector.")
+    Stop("sep should be a length 1 character vector.")
   if (length(file) != 1 || !is.character(file))
-   Stop("File must be a length 1 character vector specifying the file path.")
+   Stop("file must be a length 1 character vector specifying the file path.")
 
   if (substr(file, 1, 1) != "/")
     file <- paste0(getwd(), "/", file)
@@ -49,7 +49,7 @@ ReadCSV <- function(file, attributes, types, skip = 0, sep = ",",
   check.atts(attributes)
   schema <- convert.atts(attributes)
 
-  sample <- read.csv(file, sep = sep, skip = skip, nrows = nrows, ...)
+  sample <- read.csv(file, sep = sep, skip = skip, header = header, nrows = nrows, ...)
   if (length(names(sample)) != length(schema))
     Stop("number of attribute names given does not match number of data columns.")
 
