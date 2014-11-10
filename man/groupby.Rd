@@ -18,7 +18,7 @@ GroupBy(data, groupAtts, ...)
     a set of \link{expressions} to be used for grouping.
   }
   \item{\dots}{
-    a list of sub-ggregates. See \sQuote{details} for more information.
+    a list of sub-aggregates. See \sQuote{details} for more information.
 }
 }
 \details{
