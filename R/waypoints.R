@@ -53,3 +53,13 @@ Input <- function(data, alias, gi, schema, types = NULL, relation = NULL) {
   class(input) <- c("GI", "data")
   input
 }
+
+Filter <- function(data, gf, inputs = character(), states = NULL) {
+  check.inputs(data, inputs)
+  alias <- get.alias("gf")
+  schema <- data$schema
+  filter <- list(data = data, alias = alias, gf = gf, schema = schema,
+                 inputs = inputs, states = states)
+  class(filter) <- c("GF", "data")
+  filter
+}
