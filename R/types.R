@@ -68,7 +68,7 @@ convert.types.default <- function(types) {
 convert.types.call <- function(types) {
   args <- as.list(types)[-1]
   if (is.call.to(types, "c"))
-    args <- ifelse(lapply(args, is.language), lapply(args, convert.types), args)
+    set.names(ifelse(lapply(args, is.language), lapply(args, convert.types), args), names(args))
   else
     convert.types(list(types))[[1]]
 }
