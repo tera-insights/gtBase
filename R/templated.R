@@ -6,7 +6,7 @@ TemplateFunction <- function(.type, .name, ...) {
     .name <- call("::", as.symbol("base"), .name)
   if (!(is.call.to(.name, "::") && all(is.symbols(as.list(.name)))))
     Stop("invalid template name: ", deparse(.name))
-  if (!(as.character(.name[[2]]) %in% grokit$libraries))
+  if (!(tolower(as.character(.name[[2]])) %in% tolower(grokit$libraries)))
     Stop("unloaded library called: ", deparse(.name))
   types <- c("GLA", "UDF", "GF", "GIST", "GT", "GI", "TYPE")
   if (!(is.symbol(.type) && as.character(.type) %in% types))
