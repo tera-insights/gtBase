@@ -174,6 +174,19 @@ Translate.GT <- function(gt) {
         sep = "\n")
 }
 
+Translate.GF <- function(gf) {
+  paste(paste(lapply(gf$states, Translate), collapse = "\n"),
+        Translate(gf$data),
+        paste(gf$alias, "= FILTER", gf$data$alias, "BY"),
+        Translate(gf$gf),
+        if (!is.null(gf$states)) "REQUIRES",
+        paste("\t", lapply(gf$states, `[[`, "alias"), collapse = ",\n"),
+        if (length(gf$inputs) > 0) "USING",
+        Translate.Inputs(gf$inputs, gf$data),
+        ";",
+        sep = "\n")
+}
+
 Translate.Filter <- function(filter) {
   update.clustering(grokit$expressions[[filter$condition]], filter$data)
   paste(Translate(filter$data), "\n",
@@ -195,7 +208,7 @@ Translate.Generated <- function(generator) {
         sep = "\n")
 }
 
-Translate.Print <- function(data, inputs, type, result) {
+Translate.Print <- function(data, inputs, type, result, sep = "|") {
   paste(if (exists("grokit.jobid")) paste0("JOBID ", grokit.jobid, ";"),
         paste0("USING ", grokit$libraries, ";", collapse = "\n"),
         Translate(data), "\n",
@@ -203,7 +216,7 @@ Translate.Print <- function(data, inputs, type, result) {
         paste0("\t", lapply(grokit$expressions[inputs], Translate.Expr, data), collapse = ",\n"),
         paste('AS', quotate(type), 'HEADER'),
         paste0("\t", quotate(names(inputs)), collapse = ",\n"),
-        paste0('INTO "', result, '" SEPARATOR "|";\n'),
+        paste0('INTO "', result, '" SEPARATOR "', sep, '";\n'),
         sep = "\n")
 }
 
@@ -225,10 +238,8 @@ Translate.Inputs <- function(inputs, data) {
 }
 
 Translate.Outputs <- function(outputs) {
-  ## checks that names are syntactically correct in C++, i.e. only underscores and alpha-numeric
   if (any(bad <- !is.identifier(outputs)))
     Stop("illegal attribute names: ", paste(outputs[bad], collapse = ", "))
-
   if (any(bad <- duplicated(outputs)))
     Stop("duplicated output names: ", paste(outputs[bad], collapse = ", "))
   backtick(outputs)
@@ -292,7 +303,8 @@ Translate.Expr.name <- function(expr, data) {
 
 Translate.Expr.Operation <- function(expr, data) {
   if (expr[[1]] == "%in%")
-    paste0(Translate(UDF(Contains, values = as.character(eval(expr[[3]])))), "(", Translate.Expr(expr[[2]], data), ")")
+    paste0(Translate(UDF(Contains, values = as.character(eval(expr[[3]])))),
+           "(", Translate.Expr(expr[[2]], data), ")")
   else if (length(expr) == 3)
     paste(Translate.Expr(expr[[2]], data),
           Translate.Expr.Operator(expr[[1]], data),
