@@ -114,14 +114,14 @@ run <- function(piggy, pgy, err) {
 }
 
 ## TODO: Add generate, expressions, and type checking with USING clause
-Store <- function(data, relation, atts = AUTO, overwrite = FALSE) {
+Store <- function(data, relation, ..., overwrite = FALSE) {
   if (!inherits(data, "data"))
     Stop("data must be a data object.")
   if (exists("grokit.jobid"))
     Stop("Store is not allowed to be called from the web interface.")
   relation <- substitute(relation)
   if (!is.symbol(relation))
-    stop("Relation should be a symbol literal naming an existing relation.")
+    Stop("relation should be a symbol literal naming an existing relation.")
 
   relation <- as.character(relation)
   catalog <- grokit$schemas$catalog
@@ -131,29 +131,32 @@ Store <- function(data, relation, atts = AUTO, overwrite = FALSE) {
   index <- which(relations == relation)
   schema <- unlist(lapply(catalog[[index]]$attributes, `[[`, "name"))
 
-  if (length(schema) != length(data$schema))
-    Stop(relation, " has ", length(schema), " attributes, but that data has ",
-         length(data$schema), " attributes. They must have the same number.")
-
   file <- tempfile("Q", ".", ".")
   pgy <- paste0(file, "pgy")
-  overwrite <- if (overwrite) " OVERWRITE " else ""
+  overwrite <- if (overwrite) " OVERWRITE" else ""
 
-  atts <- substitute(atts)
+  atts <- substitute(c(...))
   names <- names(atts)[-1]
   check.atts(atts)
-  if (is.auto(atts)) {
-    store <- paste0("STORE ", data$alias, "\n",
-                    "INTO ", relation, overwrite, ";")
-  } else {
-    atts <- convert.atts(atts)
-    store <- paste0("STORE ", data$alias, "\n",
-                    "AS\n",
-                    paste0("\t", backtick(relation), ".", backtick(names), " = ", backtick(atts),
-                           collapse = ",\n"), "\n",
-                    "INTO ", relation, overwrite, ";")
-  }
+  atts <- convert.atts(atts)
 
+  if (length(atts) != 0 && (is.null(names) || any(names == "")))
+    Stop("missing attribute names")
+  if (any(bad <- names %nin% schema))
+    Stop("relation attributes not found: ", pase(bad, collapse = ", "))
+  if (any(bad <- atts %nin% names(data$schema)))
+    Stop("data attributes not found: ", paste(bad, collapse = ", "))
+  if (any(bad <- subtract(schema, names) %nin% names(data$schema)))
+    Stop("relation attributes not filled: ", paste(bad, collapse = ", "))
+
+  atts <- c(atts, subtract(schema, names))
+  names <- c(names, subtract(schema, names))
+
+  store <- paste0("STORE ", data$alias, "\n",
+                  "AS\n",
+                  paste0("\t", backtick(relation), ".", backtick(names), " = ", backtick(atts),
+                         collapse = ",\n"), "\n",
+                  "INTO ", relation, overwrite, ";")
   libraries <- paste0("USING ", grokit$libraries, ";", collapse = "\n")
   piggy <- paste(libraries,
                  Translate(data), "\n",
