@@ -1,9 +1,10 @@
-BloomFilter <- function(data, exponent = 16, inputs = AUTO, outputs = count) {
+BloomFilter <- function(data, inputs = AUTO, outputs = count, exponent = 16) {
   inputs <- substitute(inputs)
   check.exprs(inputs)
   if (is.auto(inputs))
-    inputs <- convert.schema(data$schema[[1]])
-  inputs <- convert.exprs(inputs)
+    inputs <- convert.schema(data$schema)
+  else
+    inputs <- convert.exprs(inputs)
 
   outputs <- substitute(outputs)
   check.atts(outputs)
@@ -14,6 +15,5 @@ BloomFilter <- function(data, exponent = 16, inputs = AUTO, outputs = count) {
   if (length(outputs) != 1)
     Stop("There must be exactly one output specified.")
 
-  agg <- Aggregate(data, GLA(BloomFilter, exponent = exponent), inputs, outputs)
-  agg
+  Aggregate(data, GLA(BloomFilter, exponent = exponent), inputs, outputs)
 }
