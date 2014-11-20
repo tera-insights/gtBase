@@ -11,16 +11,16 @@ Create <- function(name, ...) {
   schema <- names(types)
   if (is.null(schema) || any(schema == ""))
     Stop("missing attribute names")
-  if (any(bad <- !is.identifier(schema)))
-    Stop("invalid attribute names: ", paste(schema[bad], collapse = ", "))
 
   piggy <- paste(paste("CREATE RELATION", name, "("),
-                 paste("\t", schema, ":", lapply(types, Translate.Template), collapse = ",\n"),
+                 paste("\t", Translate.Outputs(schema), ":", lapply(types, Translate.Template), collapse = ",\n"),
                  ");", "FLUSH;", "QUIT;\n", sep = "\n")
   file <- tempfile("Q", getwd(), ".")
   pgy <- paste0(file, "pgy")
   err <- paste0(file, "err")
   run(piggy, pgy, err)
+  ## TODO: This won't work because the schema isn't created immediately. Need to run another query first.
+  grokit$schemas <- get.schema()
 }
 
 Delete <- function(name) {
@@ -34,4 +34,5 @@ Delete <- function(name) {
   pgy <- paste0(file, "pgy")
   err <- paste0(file, "err")
   run(piggy, pgy, err)
+  grokit$schemas <- get.schema()
 }
