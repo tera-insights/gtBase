@@ -32,9 +32,8 @@ Read <- function(relation) {
   data
 }
 
-ReadCSV <- function(file, attributes, types, skip = 0, sep = ",",
-                    simple = FALSE, chunk = NULL, nullable = FALSE,
-                    header = FALSE, nrows = 10000, ...) {
+ReadCSV <- function(file, attributes, skip = 0, sep = ",", simple = FALSE,
+                    chunk = NULL, nullable = FALSE, nrows = 10000, ...) {
   if (!is.numeric(skip) || skip < 0 || skip != floor(skip))
     Stop("skip in ReadCSV must be a non-negative integer.")
   if (length(sep) != 1 || !is.character(sep))
@@ -45,18 +44,21 @@ ReadCSV <- function(file, attributes, types, skip = 0, sep = ",",
   if (substr(file, 1, 1) != "/")
     file <- paste0(getwd(), "/", file)
 
+  sample <- read.csv(file, sep = sep, skip = skip, header = FALSE, nrows = nrows, ...)
+
   attributes <- substitute(attributes)
+
+  keys <- names(attributes)[-1]
+  replace <- if (is.null(keys)) rep(TRUE, length(attributes) - 1) else keys == ""
+  types <- ifelse(replace, sample[1, ], as.list(attributes)[-1])
+
+  attributes[-1][!replace] <- as.symbols(keys[!replace])
   check.atts(attributes)
   schema <- convert.atts(attributes)
 
-  sample <- read.csv(file, sep = sep, skip = skip, header = header, nrows = nrows, ...)
-  if (length(names(sample)) != length(schema))
-    Stop("number of attribute names given does not match number of data columns.")
+  if (length(names(sample)) < length(schema))
+    Stop("number of attributes specified exceeds number of data columns.")
 
-  if (missing(types))
-    types <- as.list(sample)
-  else
-    types <- substitute(types)
   types <- convert.types(types)
 
   names(schema) <- schema
@@ -109,7 +111,7 @@ ReadRelation <- function(file, relation, sep = ",", simple = FALSE) {
   schema <- unlist(lapply(catalog[[index]]$attributes, `[[`, "name"))
   alias <- get.alias("read")
   schema <- set.names(paste0(alias, ".", schema), schema)
-  gi <- GI(base::CSVReader, skip = 0, sep = ", ", simple = simple)
+  gi <- GI(base::CSVReader, skip = 0, sep = sep, simple = simple)
   class(file) <- c("file")
   data <- list(file = file, relation = relation, alias = alias, gi = gi, schema = schema)
   class(data) <- c("ReadRelation", "data")
