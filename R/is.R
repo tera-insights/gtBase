@@ -32,7 +32,7 @@ is.identifier <- function(names) {
   if (length(names) == 0)
     logical()
   else
-    1:length(names) %in% grep("[[:alpha:]_]", substring(names, 1, 1)) &&
+    1:length(names) %in% grep("[[:alpha:]_]", substring(names, 1, 1)) &
       !(1:length(names) %in% grep("[^[:alnum:]_]", substring(names, 2)))
 }
 
