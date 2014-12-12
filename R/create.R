@@ -2,15 +2,15 @@
 Create <- function(name, ...) {
   name <- substitute(name)
   if (!is.symbol(name) && is.identifier(as.character(name)))
-    Stop("invalid name given: ", deparse(name))
+    stop("invalid name given: ", deparse(name))
   if (as.character(name) %in% unlist(lapply(get.schema()$catalog, `[[`, "name")))
-    Stop("cannot overwrite relation: ", name)
+    stop("cannot overwrite relation: ", name)
   types <- convert.types(substitute(c(...)))
   if (length(types) == 0)
-    Stop("schema cannot be empty")
+    stop("schema cannot be empty")
   schema <- names(types)
   if (is.null(schema) || any(schema == ""))
-    Stop("missing attribute names")
+    stop("missing attribute names")
 
   piggy <- paste(paste("CREATE RELATION", name, "("),
                  paste("\t", Translate.Outputs(schema), ":", lapply(types, Translate.Template), collapse = ",\n"),
@@ -26,9 +26,9 @@ Create <- function(name, ...) {
 Delete <- function(name) {
   name <- substitute(name)
   if (!is.symbol(name) && is.identifier(as.character(name)))
-    Stop("invalid name given: ", deparse(name))
+    stop("invalid name given: ", deparse(name))
   if (!as.character(name) %in% unlist(lapply(get.schema()$catalog, `[[`, "name")))
-    Stop("unavailable relation: ", name)
+    stop("unavailable relation: ", name)
   piggy <- paste0("DELETE RELATION ", name, ";FLUSH;\nQUIT;\n")
   file <- tempfile("Q", getwd(), ".")
   pgy <- paste0(file, "pgy")
