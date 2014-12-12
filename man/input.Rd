@@ -13,8 +13,7 @@ Data Input
 \usage{
 Read(relation)
 
-ReadCSV(file, skip = 0, attributes = AUTO, types = AUTO, sep = ",",
-simple = FALSE, nrows = 100, ...)
+ReadCSV(file, attributes, skip = 0, sep = ",", simple = FALSE, nrows = 10000, ...)
 
 ReadFile(file, gi, attributes, ...)
 
@@ -34,10 +33,8 @@ ReadRelation(file, relation, sep = ",", simple = FALSE)
     be adjusted accordingly to account for a header line.
   }
   \item{attributes}{
-    the desired column names for the data. See \link{attributes} for details.
-  }
-  \item{types}{
-    the types of the columns to be read.
+    the desired column names for the data. See \sQuote{Details} for more
+    information.
   }
   \item{sep}{
     as the argument of the same name in \code{\link{read.csv}}
@@ -82,21 +79,13 @@ ReadRelation(file, relation, sep = ",", simple = FALSE)
     = ", "}.
   }
 
-  If not \code{AUTO}, \code{types} should be a list of values with the
-  desired types. For example, when reading in a file with 3 columns of
-  doubles, \code{types = list(1.0, 1.0, 1.0)} is suitable.
-}
-\section{AUTO}{
-  For \code{ReadCSV}, if \code{attributes = AUTO}, then names are
-  constructed as in \code{read.csv}. Arguments passed via ellipsis are
-  used by \code{read.csv} to read in a sample of the data. This
-  sample provides the names used. More specifically, if \code{header =
-  FALSE} is passed into \code{read.csv}, then the default names
-  \code{VO}, \code{V1}, and so forth. Otherwise, the first line of the
-  data will supply them.
-
-  Additionally, if \code{types = AUTO}, the types of the sample will be
-  used as \code{types}.
+  \code{attributes} should be specified as a call to \code{c} in which
+  each argument is either a symbol specifying the name of an attribute
+  or a \code{name = type} pair. In the latter case, the name of the
+  argument specifies the name of the attribute and \code{type} specifies
+  the type of that attribute. \code{type} can either be specified as a
+  symbol or a call, in which the name of the call is the type to be used
+  and the arguments will be used to template the type.
 }
 \value{
   An object of class \code{"\link{data}"} that represents the relevant
