@@ -8,7 +8,7 @@ Histogram <- function(data, length, normalize = FALSE, p = 1, inputs = AUTO, out
   outputs <- substitute(outputs)
   check.atts(outputs)
   if (is.auto(outputs))
-    Stop("outputs not allowed to be AUTO.")
+    stop("outputs not allowed to be AUTO.")
   outputs <- convert.atts(outputs)
   gla <- GLA(statistics::Histogram, length = length, normalize = normalize, p = p)
 
