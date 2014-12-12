@@ -4,36 +4,6 @@ Translate.file <- function(file) {
   paste0("\"", file, "\"")
 }
 
-Translate.Load <- function(data) {
-  ##  data$alias <- check.alias(data$alias)
-  loading <- paste("LOAD", data$relation, "AS", data$alias)
-  if (!is.null(data$cluster)) {
-    range <- as.numeric(grokit$cluster[[data$cluster]][1:2])
-    clustering <- paste("\nFILTER RANGE", paste(ifelse(is.finite(range), range, "NULL"), collapse = ", "))
-  }
-
-  paste0(loading, if (!is.null(data$cluster)) clustering, ";")
-}
-
-Translate.ReadRelation <- function(data) {
-##  data$alias <- check.alias(data$alias)
-  paste0(data$alias, " = READ FILE ", Translate(data$file), "\n",
-         "USING ", Translate(data$gi), "\n",
-         "ATTRIBUTES FROM ", data$relation, ";")
-}
-
-Translate.ReadFile <- function(data) {
-##  data$alias <- check.alias(data$alias)
-  paste0(data$alias, " = READ ", paste("FILE", Translate(data$file), collapse = " "), "\n",
-         "USING ", Translate(data$gi), "\n",
-         if (!is.null(data$chunk)) paste("CHUNKSIZE", data$chunk),
-         "ATTRIBUTES\n",
-         paste0("\t", Translate.Outputs(data$schema), " : ", lapply(data$types, Translate.Template),
-                collapse = ",\n"),
-         "\n",
-         ";")
-}
-
 Translate.Template <- function(fun, level = 0) {
   if (!is.null(names(fun$args))) {
     prefixes <- quotate(names(fun$args))
@@ -120,104 +90,25 @@ Translate.Arg <- function(arg, level = 1, prefix = "") {
         "character, inputs" = {
           paste0("[", paste0(backtick(arg), collapse = ", "), "]")
         },
-        Stop("Unsupported argument type found for: ", deparse(arg), "\n",
+        stop("Unsupported argument type found for: ", deparse(arg), "\n",
              "Type: ", typeof(arg), "\tClass: ", class(arg))
         )
   paste0(indent, prefix, body)
 }
 
-Translate.Join <- function(join) {
-  paste(Translate(join$x), "\n",
-        Translate(join$y), "\n",
-        paste(join$alias, "="),
-        "JOIN",
-        paste0("\t", join$x$alias, " BY (",
-               paste0(join$xSchema, collapse = ", "),
-               ")", ","),
-        paste0("\t", join$y$alias, " BY (",
-               paste0(join$ySchema, collapse = ", "),
-               ")", ";"),
-        sep = "\n")
-}
+Translate.Libraries <- function() paste0("USING ", grokit$libraries, ";\n", collapse = "")
 
-Translate.GLA <- function(gla) {
-  paste(paste(lapply(gla$states, Translate), collapse = "\n"),
-        Translate(gla$data),
-        paste(gla$alias, "="),
-        Translate(gla$gla),
-        "FROM",
-        paste0("\t", gla$data$alias),
-        if (!is.null(gla$states)) "REQUIRES",
-        paste("\t", lapply(gla$states, `[[`, "alias"), collapse = ",\n"),
-        if (length(gla$inputs) > 0) "USING",
-        Translate.Inputs(gla$inputs, gla$data),
-        if (length(gla$schema) > 0) "AS",
-        paste0("\t", Translate.Outputs(gla$schema), collapse = ",\n"),
-        ";",
-        sep = "\n")
-}
+Translate.ID <- function() if (exists("grokit.jobid")) paste0("JOBID ", grokit.jobid, ";\n") else ""
 
-Translate.GT <- function(gt) {
-  paste(paste(lapply(gt$states, Translate), collapse = "\n"),
-        Translate(gt$data),
-        paste(gt$alias, "="),
-        Translate(gt$gt),
-        "FROM",
-        paste0("\t", gt$data$alias),
-        if (!is.null(gt$states)) "REQUIRES",
-        paste("\t", lapply(gt$states, `[[`, "alias"), collapse = ",\n"),
-        "USING",
-        Translate.Inputs(gt$inputs, gt$data),
-        "AS",
-        paste0("\t", Translate.Outputs(gt$outputs), collapse = ",\n"),
-        ";",
-        sep = "\n")
-}
-
-Translate.GF <- function(gf) {
-  paste(paste(lapply(gf$states, Translate), collapse = "\n"),
-        Translate(gf$data),
-        paste(gf$alias, "= FILTER", gf$data$alias, "BY"),
-        Translate(gf$gf),
-        if (!is.null(gf$states)) "REQUIRES",
-        paste("\t", lapply(gf$states, `[[`, "alias"), collapse = ",\n"),
-        if (length(gf$inputs) > 0) "USING",
-        Translate.Inputs(gf$inputs, gf$data),
-        ";",
-        sep = "\n")
-}
-
-Translate.Filter <- function(filter) {
-  update.clustering(grokit$expressions[[filter$condition]], filter$data)
-  paste(Translate(filter$data), "\n",
-        paste(filter$alias, "="),
-        "FILTER",
-        paste0("\t", filter$data$alias),
-        "BY",
-        paste0("\t", Translate.Expr(grokit$expressions[[filter$condition]], filter$data)),
-        ";",
-        sep = "\n")
-}
-
-Translate.Generated <- function(generator) {
-  paste(Translate(generator$data), "\n",
-        paste(generator$alias, "="),
-        paste("FOREACH", generator$data$alias, "GENERATE"),
-        Translate.Inputs(generator$generated, generator$data),
-        ";",
-        sep = "\n")
-}
-
-Translate.Print <- function(data, inputs, type, result, sep = "|") {
-  paste(if (exists("grokit.jobid")) paste0("JOBID ", grokit.jobid, ";"),
-        paste0("USING ", grokit$libraries, ";", collapse = "\n"),
-        Translate(data), "\n",
-        paste("PRINT", data$alias, "USING"),
-        paste0("\t", lapply(grokit$expressions[inputs], Translate.Expr, data), collapse = ",\n"),
-        paste('AS', quotate(type), 'HEADER'),
-        paste0("\t", quotate(names(inputs)), collapse = ",\n"),
-        paste0('INTO "', result, '" SEPARATOR "', sep, '";\n'),
-        sep = "\n")
+Translate.Print <- function(data, inputs, type, result, sep = "|", limit = limit) {
+  paste0("PRINT ", data$alias, " USING",
+         paste0("\n\t", lapply(grokit$expressions[inputs], Translate.Expr, data), collapse = ","),
+         "\nAS", quotate(type), " HEADER",
+         paste0("\n\t", quotate(names(inputs)), collapse = ","),
+         "\nINTO ", quotate(result),
+         "\nSEPARATOR ", quotate(sep),
+         if (limit) "\nLIMIT 200000",
+         ";")
 }
 
 Translate.Store <- function(store) {
@@ -230,18 +121,16 @@ Translate.Store <- function(store) {
 
 Translate.Inputs <- function(inputs, data) {
   if (length(inputs) > 0)
-    paste0("\t", backtick(inputs), " = ",
-           lapply(grokit$expressions[inputs], Translate.Expr, data),
-           collapse = ",\n")
+    paste(backtick(inputs), "=", lapply(grokit$expressions[inputs], Translate.Expr, data))
   else
-  ""
+    ""
 }
 
 Translate.Outputs <- function(outputs) {
   if (any(bad <- !is.identifier(outputs)))
-    Stop("illegal attribute names: ", paste(outputs[bad], collapse = ", "))
+    stop("illegal attribute names: ", paste(outputs[bad], collapse = ", "))
   if (any(bad <- duplicated(outputs)))
-    Stop("duplicated output names: ", paste(outputs[bad], collapse = ", "))
+    stop("duplicated output names: ", paste(outputs[bad], collapse = ", "))
   backtick(outputs)
 }
 
@@ -258,16 +147,16 @@ Translate.Expr.call <- function(expr, data) {
     Translate.Expr.Operation(expr, data)
   else if (is.symbol(expr[[1]]))
     paste0(expr[[1]], Translate.Expr.Arguments(expr, data))
-  else if ((is.call.to(expr[[1]], "::"))) ## R requires the 2 arguments to :: to be symbols
+  else if (is.call.to(expr[[1]], "::")) ## R requires the 2 arguments to :: to be symbols
     paste0(expr[[1]][[2]], "::", expr[[1]][[3]], Translate.Expr.Arguments(expr, data))
   else if (is.method(expr[[1]]))
     Translate.Expr.Method(expr, data)
   else if (is.UDF(expr[[1]]))
     Translate.Expr.UDF(expr, data)
   else if (is.call(expr[[1]]))
-    Stop("cannot have nested function calls, e.e. f()(): ", deparse(expr))
+    stop("cannot have nested function calls, e.e. f()(): ", deparse(expr))
   else
-    Stop("illegal call in expression: ", deparse(expr))
+    stop("illegal call in expression: ", deparse(expr))
 }
 
 Translate.Expr.character <- function(expr, data) quotate(gsub('"', '\\\\"', expr))
@@ -289,13 +178,13 @@ Translate.Expr.if <- function(expr, data) {
 
 Translate.Expr.Method <- function(expr, data) {
   if (!is.symbol(expr[[1]][[3]]))
-    Stop("improper method name: ", deparse(expr))
+    stop("improper method name: ", deparse(expr))
   paste0("[", Translate.Expr(expr[[1]][[2]], data), "->", expr[[1]][[3]], Translate.Expr.Arguments(expr, data), "]")
 }
 
 Translate.Expr.name <- function(expr, data) {
   if (as.character(expr) %nin% names(data$schema))
-    Stop(name, " is not an attribute of ", data$alias)
+    stop(name, " is not an attribute of ", data$alias)
 
   att <- data$schema[[as.character(expr)]]
   paste(backtick(strsplit(att, ".", fixed = TRUE)[[1]]), collapse = ".")
@@ -303,7 +192,7 @@ Translate.Expr.name <- function(expr, data) {
 
 Translate.Expr.Operation <- function(expr, data) {
   if (expr[[1]] == "%in%")
-    paste0(Translate(UDF(Contains, values = as.character(eval(expr[[3]])))),
+    paste0(Translate(UDF(Contains, values = expr[[3]])),
            "(", Translate.Expr(expr[[2]], data), ")")
   else if (length(expr) == 3)
     paste(Translate.Expr(expr[[2]], data),
@@ -319,7 +208,7 @@ Translate.Expr.Operator <- function(symbol, data) {
   illegal <- c("[[", "[", "@", "^", ":", "<-", "<<-", "=", "?")
   name <- as.character(symbol)
   if (name %in% illegal)
-    Stop("illegal operator used in an expression: ", name)
+    stop("illegal operator used in an expression: ", name)
   if (name %in% names(map))
     map[[name]]
   else
