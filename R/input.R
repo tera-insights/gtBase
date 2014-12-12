@@ -2,14 +2,15 @@
 Read <- function(relation) {
   relation <- substitute(relation)
   if (!is.symbol(relation))
-    Stop("relation should be given as a symbol.")
+    stop("relation should be given as a symbol.")
   relation <- as.character(relation)
-  alias <- get.alias(relation)
+  alias <- create.alias(relation)
 
   catalog <- grokit$schemas$catalog
   relations <- unlist(lapply(catalog, `[[`, "name"))
   if (!(relation %in% relations))
-    Stop("unavailable relation ", relation)
+    stop("unavailable relation ", relation)
+
   index <- which(relations == relation)
   catalog <- catalog[[index]]
   schema <- unlist(lapply(catalog$attributes, `[[`, "name"))
@@ -35,11 +36,11 @@ Read <- function(relation) {
 ReadCSV <- function(file, attributes, skip = 0, sep = ",", simple = FALSE,
                     chunk = NULL, nullable = FALSE, nrows = 10000, ...) {
   if (!is.numeric(skip) || skip < 0 || skip != floor(skip))
-    Stop("skip in ReadCSV must be a non-negative integer.")
+    stop("skip in ReadCSV must be a non-negative integer.")
   if (length(sep) != 1 || !is.character(sep))
-    Stop("sep should be a length 1 character vector.")
+    stop("sep should be a length 1 character vector.")
   if (length(file) != 1 || !is.character(file))
-   Stop("file must be a length 1 character vector specifying the file path.")
+    stop("file must be a length 1 character vector specifying the file path.")
 
   if (substr(file, 1, 1) != "/")
     file <- paste0(getwd(), "/", file)
@@ -53,69 +54,76 @@ ReadCSV <- function(file, attributes, skip = 0, sep = ",", simple = FALSE,
   types <- ifelse(replace, sample[1, ], as.list(attributes)[-1])
 
   attributes[-1][!replace] <- as.symbols(keys[!replace])
-  check.atts(attributes)
+  check.atts(attributes, FALSE)
   schema <- convert.atts(attributes)
+  names(schema) <- schema
 
   if (length(names(sample)) < length(schema))
-    Stop("number of attributes specified exceeds number of data columns.")
+    stop("number of attributes specified exceeds number of data columns.")
 
   types <- convert.types(types)
 
-  names(schema) <- schema
-  alias <- get.alias("read")
+  alias <- create.alias("read")
   gi <- GI(base::CSVReader, skip = skip, sep = sep, simple = simple, nullable = nullable)
   class(file) <- c("file")
 
-  data <- list(file = file, alias = alias, gi = gi, schema = schema, types = types, chunk = chunk)
-  class(data) <- c("ReadFile", "data")
-  data
+  data <- Input(file = file, alias = alias, gi = gi, schema = schema, types = types)
+  set.class(c(data, chunk = chunk), c("ReadFile", class(data)))
 }
 
-ReadFile <- function(file, gi, attributes, chunk, ...) {
+ReadFile <- function(file, gi, attributes, chunk = NULL, ...) {
   if (length(file) != 1 || !is.character(file))
-    Stop("File must be a length 1 character vector specifying the file path.")
+    stop("File must be a length 1 character vector specifying the file path.")
+
   if (substr(file, 1, 1) != "/")
     file <- paste0(getwd(), "/", file)
-  attributes <- substitute(attributes)
-  check.atts(attributes)
-  if (!inherits(gi, "Template") || gi$type != "GI")
-    Stop("invalid GI: ", deparse(gi))
-  if (is.auto(attributes))
-    Stop("'AUTO' is not allowed for ReadFile as the input is too general.\n",
-         "It is recommended that you use ReadCSV if possible.")
-  sample <- read.file(file, ...)
 
+  if (!inherits(gi, "Template") || gi$type != "GI")
+    stop("invalid GI: ", deparse(gi))
+
+  attributes <- substitute(attributes)
+
+  keys <- names(attributes)[-1]
+  replace <- if (is.null(keys)) rep(TRUE, length(attributes) - 1) else keys == ""
+  types <- ifelse(replace, sample[1, ], as.list(attributes)[-1])
+
+  attributes[-1][!replace] <- as.symbols(keys[!replace])
+  check.atts(attributes, FALSE)
   schema <- convert.atts(attributes)
   names(schema) <- schema
-  alias <- get.alias("read")
+
+  types <- convert.types(types)
+
+  alias <- create.alias("read")
   class(file) <- c("file")
-  data <- list(file = file, alias = alias, gi = gi, schema = schema, chunk = chunk)
-  class(data) <- c("ReadFile", "data")
-  data
+
+  data <- Input(file = file, alias = alias, gi = gi, schema = schema, chunk = chunk)
+  set.class(c(data, chunk = chunk), c("ReadFile", class(data)))
 }
 
 ## file should be a character specifying file path
 ## relation should be a symbol literal
-ReadRelation <- function(file, relation, sep = ",", simple = FALSE) {
+ReadRelation <- function(file, relation, sep = ",", simple = FALSE, skip = 0, nullable = FALSE) {
   relation <- substitute(relation)
   if (!is.symbol(relation))
-    Stop("relation should be given as a symbol.")
+    stop("relation should be given as a symbol.")
   relation <- as.character(relation)
 
   catalog <- grokit$schemas$catalog
   relations <- unlist(lapply(catalog, function(x) {x$name}))
   if (!(relation %in% relations))
-    Stop("unvailable relation: ", relation)
+    stop("unvailable relation: ", relation)
 
   index <- which(relations == relation)
   schema <- unlist(lapply(catalog[[index]]$attributes, `[[`, "name"))
-  alias <- get.alias("read")
+
+  alias <- create.alias("read")
   schema <- set.names(paste0(alias, ".", schema), schema)
-  gi <- GI(base::CSVReader, skip = 0, sep = sep, simple = simple)
+  gi <- GI(base::CSVReader, skip = skip, sep = sep, simple = simple, nullable = nullable)
   class(file) <- c("file")
+
   data <- list(file = file, relation = relation, alias = alias, gi = gi, schema = schema)
-  class(data) <- c("ReadRelation", "data")
-  data
+  set.class(c(data, relation = relation), c("ReadRelation", class(data)))
 }
 
 as.data <- function(x, types) {
@@ -135,11 +143,10 @@ as.data <- function(x, types) {
     types <- substitute(types)
   types <- convert.types(types)
 
-  alias <- get.alias("read")
+  alias <- create.alias("read")
 
   gi <- GI(base::CSVReader, skip = 0, simple = TRUE, sep = "tab")
 
-  data <- list(file = file, alias = alias, gi = gi, schema = schema, types = types)
-  class(data) <- c("ReadFile", "data")
-  data
+  data <- Input(file = file, alias = alias, gi = gi, schema = schema, types = types)
+  add.class(data, "ReadFile")
 }
