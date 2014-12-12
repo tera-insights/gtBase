@@ -27,7 +27,7 @@
 convert.type <- function(type) UseMethod("convert.type")
 
 convert.type.default <- function(type)
-  Stop("Incorrectly specified type: ", type)
+  stop("Incorrectly specified type: ", type)
 
 convert.type.call <- function(type) {
   if (is.call.to(type, "::") && all(is.symbols(as.list(type)))) {
