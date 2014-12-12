@@ -1,10 +1,11 @@
-GroupBy <- function(data, group, ..., init.size = 65536, use.mct = TRUE, debug = 0) {
+GroupBy <- function(data, group, ...,
+                    fragment.size = 2000000, init.size = 65536, use.mct = TRUE, debug = 0) {
   group <- substitute(group)
   keys <- names(group)[-1]
   check.exprs(group)
   if (is.auto(group))
-    Stop("group is not allowed to be AUTO.")
-  group <- convert.exprs(group)
+    stop("group is not allowed to be AUTO.")
+  group <- convert.exprs(group, data)
 
   ## key name used if given, else the key if said key is a symbol, else hidden name.
   keys <- ifelse(if (is.null(keys)) rep(TRUE, length(group)) else keys == "",
@@ -25,7 +26,8 @@ GroupBy <- function(data, group, ..., init.size = 65536, use.mct = TRUE, debug =
 
   inputs <- c(group, GLAs$inputs)
   outputs <- c(keys, GLAs$outputs)
-  fun <- GLA(GroupBy, group = keys, aggregate = aggregate, debug = debug, init.size = init.size, use.mct = use.mct)
+  fun <- GLA(GroupBy, group = keys, aggregate = aggregate, debug = debug,
+             fragment.size = fragment.size, init.size = init.size, use.mct = use.mct)
 
   Aggregate(data, fun, inputs, outputs)
 }
