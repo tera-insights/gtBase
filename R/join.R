@@ -4,11 +4,11 @@ Join <- function(x, xAtts, y, yAtts) {
   check.atts(xAtts)
   check.atts(yAtts)
   if (is.auto(xAtts) || is.auto(yAtts))
-    Stop("AUTO is not supported for joins.")
+    stop("AUTO is not supported for joins.")
   xAtts <- convert.atts(xAtts, x)
   yAtts <- convert.atts(yAtts, y)
   if (length(xAtts) != length(yAtts))
-    Stop("xAtts and yAtts must specify the same number of attributes.")
+    stop("xAtts and yAtts must specify the same number of attributes.")
   check.schema(x, xAtts)
   check.schema(y, yAtts)
 
@@ -22,12 +22,12 @@ Join <- function(x, xAtts, y, yAtts) {
   yJoinPassed <- set.names(x$schema[xAtts[!yClashed]], yAtts[!yClashed])
   yClashed <- y$schema[yAtts[yClashed]]
 
-  xAtts <- x$schema[xAtts]
-  yAtts <- y$schema[yAtts]
+  xNames <- x$schema[xAtts]
+  yNames <- y$schema[yAtts]
 
   ## Attributes passed through the join that aren't being joined on
-  xPassed <- subtract(x$schema, xAtts)
-  yPassed <- subtract(y$schema, yAtts)
+  xPassed <- subtract(x$schema, xNames)
+  yPassed <- subtract(y$schema, yNames)
 
   xInvisible <- xPassed[names(xPassed) %in% names(y$schema)]
   yInvisible <- yPassed[names(yPassed) %in% names(x$schema)]
@@ -40,7 +40,7 @@ Join <- function(x, xAtts, y, yAtts) {
 
   schema <- c(visible, set.names(invisible, make.unique(names(invisible), names(c(visible, invisible)), TRUE)))
 
-  alias <- get.alias("join")
+  alias <- create.alias("join")
   join <- list(alias = alias, schema = schema, x = x, y = y, xSchema = xAtts, ySchema = yAtts)
   class(join) <- c("Join", "data")
   join
