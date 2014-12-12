@@ -4,8 +4,8 @@ median.default <- stats::median.default
 
 median.data <- function(x, ...) Median(x, ...)
 
-Median <- function(data, number.bins = 1000, sort.threshold = 1000,
-                   inputs = AUTO, outputs = result) {
+Median <- function(data, inputs = AUTO, outputs = result,
+                   number.bins = 1000, sort.threshold = 1000) {
   inputs <- substitute(inputs)
   check.exprs(inputs)
   if (is.auto(inputs))
@@ -15,10 +15,10 @@ Median <- function(data, number.bins = 1000, sort.threshold = 1000,
   outputs <- substitute(outputs)
   check.atts(outputs)
   if (is.auto(outputs))
-    Stop("outputs not allowed to be AUTO.")
+    stop("outputs not allowed to be AUTO.")
   outputs <- convert.atts(outputs)
   if (length(outputs) != 1)
-    Stop("There must be exactly one output specified.")
+    stop("There must be exactly one output specified.")
 
   gla <- GLA(statistics::Median_Binning,
              number.bins = number.bins,
