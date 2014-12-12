@@ -1,5 +1,5 @@
 OrderBy <- function(data, ..., inputs = AUTO, outputs = AUTO) {
-  constructor <- OrderByMake(...)
+  constructor <- OrderByMake(..., data = data)
   exprs <- get.exprs(constructor$inputs)
   atts <- as.character(exprs[is.symbols(exprs)])
 
@@ -15,7 +15,7 @@ OrderBy <- function(data, ..., inputs = AUTO, outputs = AUTO) {
     if (all(as.logical(lapply(grokit$expressions[inputs], is.symbol))))
       outputs <- unlist(lapply(grokit$expressions[unique(inputs)], as.character))
     else
-      Stop("Outputs is not allowed to be AUTO if expressions are present in inputs.")
+      stop("Outputs is not allowed to be AUTO if expressions are present in inputs.")
   else
     outputs <- convert.atts(outputs)
 
@@ -23,17 +23,17 @@ OrderBy <- function(data, ..., inputs = AUTO, outputs = AUTO) {
   outputs <- c(constructor$outputs, outputs)
 
   if (length(inputs) != length(outputs) - constructor$rank)
-    Stop("The number of inputs and outputs must be the same.")
+    stop("The number of inputs and outputs must be the same.")
 
   Aggregate(data, constructor$GLA, inputs, outputs)
 }
 
-OrderByMake <- function(..., limit = 0, rank = NULL) {
+OrderByMake <- function(..., limit = 0, rank = NULL, data) {
   args <- as.list(substitute(list(...)))[-1]
   names <- names(args)
   ordering <- lapply(args, function(arg) {
     if (length(arg) != 2 || !is.symbol(arg[[1]]))
-      Stop("Error in ", deparse(arg), "\n",
+      stop("Error in ", deparse(arg), "\n",
            "Each input must be a call of asc or dsc on an expression.")
     order <- arg[[1]]
     expr <- arg[[2]]
@@ -44,11 +44,11 @@ OrderByMake <- function(..., limit = 0, rank = NULL) {
   directions <- as.character(lapply(ordering, `[[`, 1))
 
   if (!all(directions %in% c("asc", "dsc")))
-    Stop("Directional specifiers must be either asc or dsc.",
+    stop("Directional specifiers must be either asc or dsc.",
          "The following are erroneous:\n",
          paste0("\t", subtract(directions, c("asc", "dsc")), collapse = "\n"))
 
-  atts <- unlist(lapply(exprs, convert.exprs, data = x))
+  atts <- unlist(lapply(exprs, convert.exprs, data = data))
   directions <- as.list(directions)
   names(directions) <- atts
 
