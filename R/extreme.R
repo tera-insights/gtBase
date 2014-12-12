@@ -15,7 +15,7 @@ ExtremeTuples <- function(data, ..., inputs = AUTO, outputs = AUTO) {
     if (all(as.logical(lapply(grokit$expressions[inputs], is.symbol))))
       outputs <- unlist(lapply(grokit$expressions[unique(inputs)], as.character))
     else
-      Stop("Outputs is not allowed to be AUTO if expressions are present in inputs.")
+      stop("Outputs is not allowed to be AUTO if expressions are present in inputs.")
   else
     outputs <- convert.atts(outputs)
 
@@ -23,7 +23,7 @@ ExtremeTuples <- function(data, ..., inputs = AUTO, outputs = AUTO) {
   outputs <- c(constructor$outputs, outputs)
 
   if (length(inputs) != length(outputs))
-    Stop("The number of inputs and outputs must be the same.")
+    stop("The number of inputs and outputs must be the same.")
 
   Aggregate(data, constructor$GLA, inputs, outputs)
 }
@@ -33,7 +33,7 @@ ExtremeTuplesMake <- function(...) {
   names <- names(args)
   ordering <- lapply(args, function(arg) {
     if (length(arg) != 2 || !is.symbol(arg[[1]]))
-      Stop("Error in ", deparse(arg), "\n",
+      stop("Error in ", deparse(arg), "\n",
            "Each input must be a call of min or max on an expression.")
     order <- arg[[1]]
     expr <- arg[[2]]
@@ -44,7 +44,7 @@ ExtremeTuplesMake <- function(...) {
   directions <- as.character(lapply(ordering, `[[`, 1))
 
   if (!all(directions %in% c("min", "max")))
-    Stop("directional specifiers must be either min or max.",
+    stop("directional specifiers must be either min or max.",
          "The following are erroneous:\n",
          paste0("\t", subtract(directions, c("min", "max")), collapse = "\n"))
 
