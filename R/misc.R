@@ -1,29 +1,3 @@
-Stop <- function(..., traceback = rev(sys.calls())) {
-  class(traceback) <- "pairlist"
-  if (getOption("stacktrace", FALSE))
-    cat(paste0(length(traceback):1, ": ", traceback, "\n"))
-  if (exists("grokit.jobid")) {
-    tr <- list(line = 1, col = 1, line.end = 1, col.end = 1)
-    message <- gsub("\t", " ", gsub("\n", " ", paste0(...)))
-    error <- list(
-        `__type__` = "error",
-        message = message,
-        kind = "R",
-        line = tr$line,
-        column = tr$col,
-        line_end = tr$line.end,
-        column_end = tr$col.end
-        )
-    cat(paste0(...))
-    throw.error(error)
-  } else {
-    if (length(list(...)) != 0)
-      stop(..., call. = FALSE)
-    else
-      stop("error occurred in standard R.")
-  }
-}
-
 extract.symbols <- function(expr) {
   if(is.symbol(expr))
     expr
@@ -38,25 +12,33 @@ extract.symbols <- function(expr) {
     NULL
 }
 
+. <- function(x) x
+
+long.name <- function(expr, data) {
+  if (all(is.symbols(as.list(expr))))
+    if (!is.data(other <- eval(expr[[2]], .GlobalEnv)))
+      stop("invalid waypoint referenced: ", deparse(expr))
+    else if ((att <- as.character(expr[[3]])) %nin% names(other$schema))
+      stop("missing attribute referenced: ", deparse(expr))
+    else if (other$schema[[att]] %nin% data$schema)
+      stop("long name ", deparse(expr), " missing from current waypoint")
+    else
+      as.symbol(names(data$schema)[[which(other$schema[[as.character(expr[[3]])]] == data$schema)[[1]]]])
+  else
+    stop("attribute reference used incorrectly: ", deparse(expr))
+}
+
 eval. <- function(expr, data, envir = parent.frame()) {
   if (is.call(expr))
     if (is.call.to(expr, "."))
       if (length(expr) != 2)
-        Stop("the .() construct is only allowed a single argument.")
+        stop("the .() construct is only allowed a single argument.")
       else
         eval(expr[[2]], envir)
     else if (is.call.to(expr, "@")) ## Evaluating attribute reference
-      if (all(is.symbols(as.list(expr))))
-        if (!is.data(other <- eval(expr[[2]], .GlobalEnv)))
-          Stop("invalid waypoint referenced: ", deparse(expr))
-        else if (as.character(expr[[3]]) %in% names(other$schema))
-          names(data$schema)[[which(other$schema[[as.character(expr[[3]])]] == data$schema)[[1]]]]
-        else
-          Stop("missing attribute referenced: ", deparse(expr))
-      else
-        Stop("attribute reference used incorrectly: ", deparse(expr))
+      long.name(expr, data)
     else
-      as.call(lapply(expr, eval., envir, data))
+      as.call(lapply(expr, eval., data, envir))
   else
     expr
 }
@@ -109,7 +91,7 @@ as.unit <- function(x) x / mod(x)
 
 name.exprs <- function(expressions, data) {
   if (length(expressions) == 0) {
-    names <- expressions <- names(data$schema)
+    names <- expressions <- names(data$schema)[match(unique(data$schema), data$schema)]
     expressions <- lapply(expressions, as.symbol)
   } else {
     names <- names(expressions)
@@ -159,12 +141,13 @@ set.names <- function(x, names) {
 
 as.symbols <- function(x) lapply(x, as.symbol)
 
-get.alias <- function(type = "alias") {
+create.alias <- function(type = "alias") {
   if (type %in% names(grokit$alias))
     grokit$alias[[type]] <- grokit$alias[[type]] + 1
   else
     grokit$alias[[type]] <- 1
-  grokit$waypoints <- paste0(type, "_", grokit$alias[[type]])
+  grokit$waypoints <- c(grokit$waypoints, paste0(type, "_", grokit$alias[[type]]))
+  tail(grokit$waypoints, 1)
 }
 
 subtract <- function(x, y) x[!(x %in% y)]
