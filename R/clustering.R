@@ -39,6 +39,9 @@ update.clustering <- function(expr, data) {
 ## bound shold be "upper" or "lower"
 do.bounding <- function(literal, attribute, bound) UseMethod("do.bounding")
 
+do.bounding.typeof <- function(literal, attribute, bound)
+  stop("clusting attribute cannot be compared with type: ", typeof(literal))
+
 do.bounding.numeric <- function(literal, attribute, bound) {
   literal <- if (bound == "lower") ceiling(literal) else floor(literal)
   if (bound == "lower")
@@ -54,7 +57,7 @@ do.bounding.Date <- function(literal, attribute, bound) {
   else if (type == "base::datetime")
     literal <- as.integer(as.POSIXct(literal))
   else
-    Stop("Date compared to ", type)
+    stop("Date compared to ", type)
   do.bounding(literal, attribute, bound)
 }
 
@@ -63,7 +66,7 @@ do.bounding.POSIXct <- function(literal, attribute, bound) {
   if (type == "base::datetime")
     literal <- as.integer(literal)
   else
-    Stop("POSIXct compared to ", type)
+    stop("POSIXct compared to ", type)
   do.bounding(literal, attribute, bound)
 }
 
@@ -72,6 +75,6 @@ do.bounding.POSIXlt <- function(literal, attribute, bound) {
   if (type == "base::datetime")
     literal <- as.integer(as.POSIXct(literal))
   else
-    Stop("POSIXct compared to ", type)
+    stop("POSIXct compared to ", type)
   do.bounding(literal, attribute, bound)
 }
