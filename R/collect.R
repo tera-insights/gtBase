@@ -9,11 +9,11 @@ Collect <- function(data, inputs = AUTO, outputs) {
     outputs <- substitute(outputs)
     check.atts(outputs)
     if (is.auto(outputs))
-      Stop("outputs is not allowed to be AUTO.")
+      stop("outputs is not allowed to be AUTO.")
     else
       outputs <- convert.atts(outputs)
     if (length(outputs) != 1)
-      Stop("There must be exactly one output specified.")
+      stop("There must be exactly one output specified.")
   } else {
     outputs <- NULL
   }
