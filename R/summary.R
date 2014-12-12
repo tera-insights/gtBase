@@ -9,14 +9,14 @@ Summary <- function(data, inputs = AUTO, outputs = AUTO) {
   check.atts(outputs)
   if (is.auto(outputs))
     if (!all(is.symbols(get.exprs(inputs))))
-      Stop("AUTO illegally used for outputs.")
+      stop("AUTO illegally used for outputs.")
     else
       outputs <- c(as.character(get.exprs(inputs)), "count")
   else
     outputs <- convert.atts(outputs)
 
   if (length(outputs) != length(inputs) + 1)
-    Stop("incorrect number of outputs specified.")
+    stop("incorrect number of outputs specified.")
 
   l <- length(outputs)
 
