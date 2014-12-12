@@ -23,20 +23,16 @@ convert.args.Template <- function(template, renaming) {
 
 convert.atts <- function(attributes, data = NULL) {
   if (is.call.to(attributes, "c"))
-    unlist(lapply(as.list(attributes)[-1], convert.atts))
+    unlist(lapply(as.list(attributes)[-1], convert.atts, data = data))
   else if (is.call.to(attributes, "@"))
     if (is.null(data))
-      Stop("attribute reference used incorrectly.")
-    else if (!is.data(other <- eval(attributes[[2]], .GlobalEnv)))
-      Stop("invalid waypoint referenced: ", deparse(attributes))
-    else if (as.character(attributes[[3]]) %in% names(other$schema))
-      names(data$schema)[[which(other$schema[[as.character(attributes[[3]])]] == data$schema)[[1]]]]
+      stop("attribute reference used incorrectly.")
     else
-      Stop("missing attribute referenced: ", deparse(attributes))
+      as.character(long.name(attributes, data))
   else if (is.symbol(attributes))
     as.character(attributes)
   else
-    Stop("attribute specified incorrectly.")
+    stop("attribute specified incorrectly.")
 }
 
 convert.exprs <- function(...) UseMethod("convert.exprs")
@@ -57,7 +53,7 @@ convert.exprs.call <- function(expressions, data, atts = NULL) {
 
 convert.exprs.name <- function(expressions, data, atts = NULL) {
   if (is.auto(expressions))
-    Stop("AUTO used illegally.")
+    stop("AUTO used illegally.")
   else if (expressions == "")
     character()
   else
@@ -71,7 +67,7 @@ convert.exprs.list <- function(expressions, data, atts = NULL) {
   if (is.null(atts))
     atts <- paste0("expr", (length(grokit$expressions) + 1):(length(grokit$expressions) + length(expressions)))
   else if (length(atts) != length(expressions))
-    Stop("in convert.exprs, atts must be the same length as expressions.")
+    stop("in convert.exprs, atts must be the same length as expressions.")
   grokit$expressions[atts] <- expressions
   atts
 }
