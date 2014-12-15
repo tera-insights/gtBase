@@ -91,7 +91,7 @@ GetResult <- function(data, type, inputs, result, limit = FALSE) {
 
 run <- function(piggy, pgy, err) {
   if (getOption("show.piggy", TRUE))
-    cat(gsub("\t", "  ", piggy))
+    cat(paste0(gsub("\t", "  ", piggy), "\n"))
   cat(piggy, file = pgy)
   args <- c("-e", err, "run", pgy)
   code <- system2("grokit", args = args)
