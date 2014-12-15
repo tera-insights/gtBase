@@ -46,9 +46,9 @@ Translate.Arg <- function(arg, level = 1, prefix = "") {
           if (length(arg) == 0)
             "[ ]"
           else if (length(arg) == 1)
-           quotate(gsub('"', '\\\\"', arg))
+           Translate.Expr.character
           else
-            paste0("[", paste0(quotate(gsub('"', '\\\\"', arg)), collapse = ", "), "]")
+            paste0("[", paste(lapply(arg, Translate.Expr.character), collapse = ", "), "]")
         },
         "symbol, name" = backtick(arg),
         "language, call" = {
@@ -159,7 +159,10 @@ Translate.Expr.call <- function(expr, data) {
     stop("illegal call in expression: ", deparse(expr))
 }
 
-Translate.Expr.character <- function(expr, data) quotate(gsub('"', '\\\\"', expr))
+Translate.Expr.character <- function(expr, data) {
+  map <- c("\"" = "\\\"", "\n" = "\\n", "\t" = "\\t", "\\" = "\\\\")
+  paste(ifelse((chars <- unlist(strsplit(expr, ""))) %in% names(map), map[chars], chars), collapse = "")
+}
 
 Translate.Expr.Date <- function(expr, data) gsub(" 0", " ", format(expr, "DATE(%Y, %m, %d)"))
 
@@ -199,8 +202,8 @@ Translate.Expr.Operation <- function(expr, data) {
           Translate.Expr.Operator(expr[[1]], data),
           Translate.Expr(expr[[3]], data))
   else
-    paste(Translate.Expr.Operator(expr[[1]], data),
-          Translate.Expr(expr[[2]], data))
+    paste0(Translate.Expr.Operator(expr[[1]], data),
+           Translate.Expr(expr[[2]], data))
 }
 
 Translate.Expr.Operator <- function(symbol, data) {
