@@ -8,7 +8,7 @@ Sum <- function(data, inputs = AUTO, outputs = AUTO) {
   outputs <- substitute(outputs)
   check.atts(outputs)
   if (is.auto(outputs))
-    if (is.symbols(grokit$expressions[inputs]))
+    if (all(is.symbols(grokit$expressions[inputs])))
       outputs <- unlist(lapply(grokit$expressions[inputs], as.character))
     else
       stop("outputs can only be AUTO when inputs are all attributes.")
@@ -69,7 +69,7 @@ Min <- function(data, inputs = AUTO, outputs = AUTO) {
   outputs <- substitute(outputs)
   check.atts(outputs)
   if (is.auto(outputs))
-    if (is.symbols(grokit$expressions[inputs]))
+    if (all(is.symbols(grokit$expressions[inputs])))
       outputs <- unlist(lapply(grokit$expressions[inputs], as.character))
     else
       stop("outputs can only be AUTO when inputs are all attributes.")
@@ -92,7 +92,7 @@ Max <- function(data, inputs = AUTO, outputs = AUTO) {
   outputs <- substitute(outputs)
   check.atts(outputs)
   if (is.auto(outputs))
-    if (is.symbols(grokit$expressions[inputs]))
+    if (all(is.symbols(grokit$expressions[inputs])))
       outputs <- unlist(lapply(grokit$expressions[inputs], as.character))
     else
       stop("outputs can only be AUTO when inputs are all attributes.")
@@ -115,7 +115,7 @@ Distinct <- function(data, inputs = AUTO, outputs = AUTO) {
   outputs <- substitute(outputs)
   check.atts(outputs)
   if (is.auto(outputs))
-    if (is.symbols(grokit$expressions[inputs]))
+    if (all(is.symbols(grokit$expressions[inputs])))
       outputs <- unlist(lapply(grokit$expressions[inputs], as.character))
     else
       stop("outputs can only be AUTO when inputs are all attributes.")
