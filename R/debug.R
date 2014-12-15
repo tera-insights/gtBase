@@ -1,12 +1,20 @@
 Stop <- function() {
   if (exists("grokit.jobid")) {
-    tb <- lapply(head(tail(sys.calls(), -4), -1), deparse)
-    tr <- list(line = 1, col = 1, line.end = 1, col.end = 1)
+    tb <- traceback(2)
+    refs <- lapply(tb, attr, "srcref")
+    locs <- ifelse(lapply(refs, is.null), list(), lapply(refs, head, 4))
+    first <- max(which(!unlist(lapply(refs, is.null))))
+    tr <-
+      if (first == -Inf)
+        list(line = -1, col = -1, line.end = -1, col.end = -1)
+      else
+        setNames(as.list(locs[[first]]), c("line", "col", "line.end", "col.end"))
     error <- list(
         `__type__` = "error",
         message = geterrmessage(),
         kind = "R",
-        traceback = tb,
+        traceback = as.list(tb),
+        locations = locs,
         line = tr$line,
         column = tr$col,
         line_end = tr$line.end,
