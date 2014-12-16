@@ -46,7 +46,7 @@ Translate.Arg <- function(arg, level = 1, prefix = "") {
           if (length(arg) == 0)
             "[ ]"
           else if (length(arg) == 1)
-           Translate.Expr.character
+           Translate.Expr.character(arg)
           else
             paste0("[", paste(lapply(arg, Translate.Expr.character), collapse = ", "), "]")
         },
@@ -103,7 +103,7 @@ Translate.ID <- function() if (exists("grokit.jobid")) paste0("JOBID ", grokit.j
 Translate.Print <- function(data, inputs, type, result, sep = "|", limit = limit) {
   paste0("PRINT ", data$alias, " USING",
          paste0("\n\t", lapply(grokit$expressions[inputs], Translate.Expr, data), collapse = ","),
-         "\nAS", quotate(type), " HEADER",
+         "\nAS ", quotate(type), " HEADER",
          paste0("\n\t", quotate(names(inputs)), collapse = ","),
          "\nINTO ", quotate(result),
          "\nSEPARATOR ", quotate(sep),
@@ -161,7 +161,7 @@ Translate.Expr.call <- function(expr, data) {
 
 Translate.Expr.character <- function(expr, data) {
   map <- c("\"" = "\\\"", "\n" = "\\n", "\t" = "\\t", "\\" = "\\\\")
-  paste(ifelse((chars <- unlist(strsplit(expr, ""))) %in% names(map), map[chars], chars), collapse = "")
+  quotate(paste(ifelse((chars <- unlist(strsplit(expr, ""))) %in% names(map), map[chars], chars), collapse = ""))
 }
 
 Translate.Expr.Date <- function(expr, data) gsub(" 0", " ", format(expr, "DATE(%Y, %m, %d)"))
