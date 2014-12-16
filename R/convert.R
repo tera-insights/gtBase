@@ -73,6 +73,8 @@ convert.exprs.list <- function(expressions, data, atts = NULL) {
 }
 
 convert.outputs <- function(names, update = TRUE) {
+  if (length(repeats <- which(duplicated(names))) != 0)
+    stop("repeated column names: ", paste(names[repeats], collapse = ", "))
   as.character(lapply(names, function(name) {
     while (name %in% grokit$outputs)
       name <- paste0("_", name)
