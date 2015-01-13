@@ -2,7 +2,7 @@ BloomFilter <- function(data, inputs = AUTO, outputs = count, exponent = 16) {
   inputs <- substitute(inputs)
   check.exprs(inputs)
   if (is.auto(inputs))
-    inputs <- convert.schema(data$schema)
+    inputs <- convert.schema(names(data$schema))
   else
     inputs <- convert.exprs(inputs)
 

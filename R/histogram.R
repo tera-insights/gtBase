@@ -2,7 +2,7 @@ Histogram <- function(data, length, normalize = FALSE, p = 1, inputs = AUTO, out
   inputs <- substitute(inputs)
   check.exprs(inputs)
   if (is.auto(inputs))
-    inputs <- convert.schema(data$schema)
+    inputs <- convert.schema(names(data$schema))
   inputs <- convert.exprs(inputs)
 
   outputs <- substitute(outputs)

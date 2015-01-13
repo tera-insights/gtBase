@@ -2,7 +2,7 @@ Sum <- function(data, inputs = AUTO, outputs = AUTO) {
   inputs <- substitute(inputs)
   check.exprs(inputs)
   if (is.auto(inputs))
-    inputs <- convert.schema(data$schema)
+    inputs <- convert.schema(names(data$schema))
   inputs <- convert.exprs(inputs, data)
 
   outputs <- substitute(outputs)
@@ -25,7 +25,7 @@ Average <- function(data, inputs = AUTO, outputs = AUTO) {
   inputs <- substitute(inputs)
   check.exprs(inputs)
   if (is.auto(inputs))
-    inputs <- convert.schema(data$schema)
+    inputs <- convert.schema(names(data$schema))
   inputs <- convert.exprs(inputs, data)
 
   outputs <- substitute(outputs)
@@ -55,7 +55,7 @@ Count <- function(data, outputs = count) {
     stop("There must be exactly one output specified.")
 
   gla <- GLA(Count)
-  agg <- Aggregate(data, gla, character(), outputs)
+  agg <- Aggregate(data, gla, inputs, outputs)
   agg
 }
 
@@ -63,7 +63,7 @@ Min <- function(data, inputs = AUTO, outputs = AUTO) {
   inputs <- substitute(inputs)
   check.exprs(inputs)
   if (is.auto(inputs))
-    inputs <- convert.schema(data$schema)
+    inputs <- convert.schema(names(data$schema))
   inputs <- convert.exprs(inputs, data)
 
   outputs <- substitute(outputs)
@@ -86,7 +86,7 @@ Max <- function(data, inputs = AUTO, outputs = AUTO) {
   inputs <- substitute(inputs)
   check.exprs(inputs)
   if (is.auto(inputs))
-    inputs <- convert.schema(data$schema)
+    inputs <- convert.schema(names(data$schema))
   inputs <- convert.exprs(inputs, data)
 
   outputs <- substitute(outputs)
@@ -109,7 +109,7 @@ Distinct <- function(data, inputs = AUTO, outputs = AUTO) {
   inputs <- substitute(inputs)
   check.exprs(inputs)
   if (is.auto(inputs))
-    inputs <- convert.schema(data$schema)
+    inputs <- convert.schema(names(data$schema))
   inputs <- convert.exprs(inputs, data)
 
   outputs <- substitute(outputs)
@@ -132,7 +132,7 @@ CountDistinct <- function(data, inputs = AUTO, outputs = count) {
   inputs <- substitute(inputs)
   check.exprs(inputs)
   if (is.auto(inputs))
-    inputs <- convert.schema(data$schema)
+    inputs <- convert.schema(names(data$schema))
   inputs <- convert.exprs(inputs, data)
 
   outputs <- substitute(outputs)

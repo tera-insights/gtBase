@@ -6,7 +6,7 @@ ExtremeTuples <- function(data, ..., inputs = AUTO, outputs = AUTO) {
   inputs <- substitute(inputs)
   check.exprs(inputs)
   if (is.auto(inputs))
-    inputs <- convert.schema(subtract(data$schema, atts))
+    inputs <- convert.schema(subtract(names(data$schema), atts))
   inputs <- convert.exprs(inputs)
 
   outputs <- substitute(outputs)

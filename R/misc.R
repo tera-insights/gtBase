@@ -123,7 +123,7 @@ get.schema <- function() {
 get.exprs <- function(...) grokit$expressions[c(...)]
 
 add.class <- function(x, class) {
-  class(x) <- c(class(x), class)
+  class(x) <- c(class, oldClass(x))
   x
 }
 
@@ -171,3 +171,6 @@ as.exprs <- function(expr) {
   else
     list(expr)
 }
+
+grokit.library <- function(libraries)
+  grokit$libraries <- c(grokit$libraries, as.character(libraries))

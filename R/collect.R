@@ -2,7 +2,7 @@ Collect <- function(data, inputs = AUTO, outputs) {
   inputs <- substitute(inputs)
   check.exprs(inputs)
   if (is.auto(inputs))
-    inputs <- convert.schema(data$schema)
+    inputs <- convert.schema(names(data$schema))
   inputs <- convert.exprs(inputs)
 
   if (!missing(outputs)) {
