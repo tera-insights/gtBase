@@ -113,7 +113,7 @@ run <- function(piggy, pgy, err) {
 }
 
 ## TODO: Add generate, expressions, and type checking with USING clause
-Store <- function(data, relation, ..., overwrite = FALSE) {
+Store <- function(data, relation, ..., .overwrite = FALSE) {
   if (!inherits(data, "data"))
     stop("data must be a data object.")
   if (exists("grokit.jobid"))
@@ -132,7 +132,7 @@ Store <- function(data, relation, ..., overwrite = FALSE) {
 
   file <- tempfile("Q", ".", ".")
   pgy <- paste0(file, "pgy")
-  overwrite <- if (overwrite) " OVERWRITE" else ""
+  overwrite <- if (.overwrite) " OVERWRITE" else ""
 
   atts <- substitute(c(...))
   names <- names(atts)[-1]
@@ -148,19 +148,22 @@ Store <- function(data, relation, ..., overwrite = FALSE) {
   if (any(bad <- subtract(schema, names) %nin% names(data$schema)))
     stop("relation attributes not filled: ", paste(bad, collapse = ", "))
 
-  atts <- data$schema[c(atts, subtract(schema, names))]
+  atts <- c(atts, subtract(schema, names))
   names <- c(names, subtract(schema, names))
+
+  waypoints <- Translate(data)
+  waypoints <- waypoints[order(match(names(waypoints), grokit$waypoints))]
 
   store <- paste0("STORE ", data$alias, "\n",
                   "AS\n",
-                  paste0("\t", backtick(relation), ".", backtick(names), " = ", backtick(atts),
+                  paste0("\t", backtick(relation), ".", backtick(names), " = ",
+                         lapply(atts, Translate.Expr.name, data),
                          collapse = ",\n"), "\n",
-                  "INTO ", relation, overwrite, ";")
-  libraries <- paste0("USING ", grokit$libraries, ";", collapse = "\n")
-  piggy <- paste(libraries,
-                 Translate(data), "\n",
-                 store,
-                 sep = "\n")
+                  "INTO ", relation, overwrite, ";\n")
+
+  piggy <- paste(Translate.ID(), Translate.Libraries(), "\n",
+                 paste(c(Translate(data), store), collapse = "\n"))
+
   cat(piggy, file = pgy)
   if (getOption("show.piggy", TRUE))
     cat(gsub("\t", "  ", piggy))
