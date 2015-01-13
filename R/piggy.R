@@ -108,15 +108,7 @@ Translate.Print <- function(data, inputs, type, result, sep = "|", limit = limit
          "\nINTO ", quotate(result),
          "\nSEPARATOR ", quotate(sep),
          if (limit) "\nLIMIT 200000",
-         ";")
-}
-
-Translate.Store <- function(store) {
-  libraries <- paste0("USING ", grokit$libraries, ";", collapse = "\n")
-  paste(libraries,
-        Translate(x), "\n",
-        paste0("STORE ", x$alias, " INTO ", relation, overwrite, ";"),
-        sep = "\n")
+         ";\n")
 }
 
 Translate.Inputs <- function(inputs, data) {
