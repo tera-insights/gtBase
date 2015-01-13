@@ -27,7 +27,7 @@
 convert.type <- function(type) UseMethod("convert.type")
 
 convert.type.default <- function(type)
-  stop("Incorrectly specified type: ", type)
+  stop("Unrecognized type: ", type, " has type ", typeof(type))
 
 convert.type.call <- function(type) {
   if (is.call.to(type, "::") && all(is.symbols(as.list(type)))) {
@@ -69,6 +69,11 @@ convert.types.call <- function(types) {
   args <- as.list(types)[-1]
   if (is.call.to(types, "c"))
     set.names(ifelse(lapply(args, is.language), lapply(args, convert.types), args), names(args))
+  else if (is.call.to(types, "."))
+    if (length(types) != 2)
+      stop("the .() construct is only allowed a single argument.")
+    else
+      eval(types[[2]])
   else
     convert.types(list(types))[[1]]
 }
