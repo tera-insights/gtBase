@@ -51,15 +51,6 @@ convert.exprs.call <- function(expressions, data, atts = NULL) {
     convert.exprs(list(expressions), data, atts)
 }
 
-convert.exprs.name <- function(expressions, data, atts = NULL) {
-  if (is.auto(expressions))
-    stop("AUTO used illegally.")
-  else if (expressions == "")
-    character()
-  else
-    convert.exprs(list(expressions), data, atts)
-}
-
 convert.exprs.list <- function(expressions, data, atts = NULL) {
   ## Do evaluation of .() constructs now. Lazy evaluation is bad because re-binding.
   expressions <- lapply(expressions, eval., data = data)
@@ -70,6 +61,15 @@ convert.exprs.list <- function(expressions, data, atts = NULL) {
     stop("in convert.exprs, atts must be the same length as expressions.")
   grokit$expressions[atts] <- expressions
   atts
+}
+
+convert.exprs.name <- function(expressions, data, atts = NULL) {
+  if (is.auto(expressions))
+    stop("AUTO used illegally.")
+  else if (expressions == "")
+    character()
+  else
+    convert.exprs(list(expressions), data, atts)
 }
 
 convert.outputs <- function(names, update = TRUE) {
