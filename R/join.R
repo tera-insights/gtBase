@@ -1,10 +1,8 @@
 Join <- function(x, xAtts, y, yAtts) {
   xAtts <- substitute(xAtts)
   yAtts <- substitute(yAtts)
-  check.atts(xAtts)
-  check.atts(yAtts)
-  if (is.auto(xAtts) || is.auto(yAtts))
-    stop("AUTO is not supported for joins.")
+  check.atts(xAtts, FALSE)
+  check.atts(yAtts, FALSE)
   xAtts <- convert.atts(xAtts, x)
   yAtts <- convert.atts(yAtts, y)
   if (length(xAtts) != length(yAtts))
@@ -32,16 +30,64 @@ Join <- function(x, xAtts, y, yAtts) {
   xInvisible <- xPassed[names(xPassed) %in% names(y$schema)]
   yInvisible <- yPassed[names(yPassed) %in% names(x$schema)]
 
-  xVisible <- subtract(xPassed, xInvisible)
-  yVisible <- subtract(yPassed, yInvisible)
+  xVisible <- xPassed[names(xPassed) %nin% names(y$schema)]
+  yVisible <- yPassed[names(yPassed) %nin% names(x$schema)]
 
   invisible <- c(xClashed, xInvisible, yClashed, yInvisible)
   visible <- c(xJoinPassed, xVisible, yJoinPassed, yVisible)
 
-  schema <- c(visible, set.names(invisible, make.unique(names(invisible), names(c(visible, invisible)), TRUE)))
+  schema <- c(visible, setNames(invisible, make.unique(names(invisible), names(c(visible, invisible)), TRUE)))
 
   alias <- create.alias("join")
   join <- list(alias = alias, schema = schema, x = x, y = y, xSchema = xAtts, ySchema = yAtts)
   class(join) <- c("Join", "data")
   join
+}
+
+Join2 <- function(x, xAtts, y, yAtts, yPassed) {
+  xAtts <- substitute(xAtts)
+  yAtts <- substitute(yAtts)
+  check.atts(xAtts, FALSE)
+  check.atts(yAtts, FALSE)
+  xAtts <- convert.exprs(xAtts, x)
+  yAtts <- convert.atts(yAtts, y)
+  if (length(xAtts) != length(yAtts))
+    stop("xAtts and yAtts must specify the same number of attributes.")
+  check.inputs(x, xAtts)
+  check.schema(y, yAtts)
+
+  if (missing(yPassed)) {
+    yPassed <- subtract(names(y$schema), c(yAtts, names(x$schema)))
+  } else {
+    yPassed <- substitute(yPassed)
+    check.atts(yPassed, FALSE)
+    yPassed <- convert.atts(yAtts)
+  }
+
+  group <- convert.schema(yAtts)
+  inner <- do.call(call, c("Gather", inputs = convert.schema(yPassed)), TRUE)
+  right <- eval(call("GroupBy", y, group, inner, use.mct = FALSE))
+  Transform(x, GT(Join), xAtts, yPassed, list(right))
+}
+
+Gather <- function(data, inputs = AUTO, outputs = AUTO) {
+  inputs <- substitute(inputs)
+  check.exprs(inputs)
+  if (is.auto(inputs))
+    inputs <- convert.schema(names(data$schema))
+  inputs <- convert.exprs(inputs)
+
+  outputs <- substitute(outputs)
+  check.atts(outputs)
+  if (is.auto(outputs))
+    if (all(is.symbols(grokit$expressions[inputs])))
+      outputs <- unlist(lapply(grokit$expressions[inputs], as.character))
+    else
+      stop("outputs can only be AUTO when inputs are all attributes.")
+  else
+    outputs <- convert.atts(outputs)
+  if (length(outputs) != length(inputs))
+    stop("There must be exactly one output specified per input.")
+
+  Aggregate(data, GLA(Gather), inputs, outputs)
 }
