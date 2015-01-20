@@ -12,7 +12,7 @@ Translate.Template <- function(fun, level = 0) {
     prefixes <- rep("", length(fun$args))
   }
   indent <- paste(rep("\t", level), collapse = "")
-  paste0(fun$type, ":", fun$library, "\\", fun$name, "<",
+  paste0(fun$type, ":", backtick(fun$library), "\\", backtick(fun$name), "<",
          {
            if (length(fun$args) > 0)
              paste0("\n",
