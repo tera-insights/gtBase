@@ -25,7 +25,7 @@ long.name <- function(expr, data) {
     else
       as.symbol(names(data$schema)[[which(other$schema[[as.character(expr[[3]])]] == data$schema)[[1]]]])
   else
-    stop("attribute reference used incorrectly: ", deparse(expr))
+    stop("attribute reference operator used incorrectly: ", deparse(expr))
 }
 
 eval. <- function(expr, data, envir = parent.frame()) {
@@ -51,7 +51,7 @@ process <- function(expression, data) {
 }
 
 quotate <- function(x, wrapper = '"') {
-  brackets <- c("{" = "}", "(" = ")", "[" = "]")
+  brackets <- c("{" = "}", "(" = ")", "[" = "]", "<" = ">")
   if (is.bracket(as.symbol(wrapper)))
     end <- brackets[[wrapper]]
   else
