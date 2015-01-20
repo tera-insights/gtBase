@@ -55,7 +55,7 @@ Count <- function(data, outputs = count) {
     stop("There must be exactly one output specified.")
 
   gla <- GLA(Count)
-  agg <- Aggregate(data, gla, inputs, outputs)
+  agg <- Aggregate(data, gla, character(), outputs)
   agg
 }
 
