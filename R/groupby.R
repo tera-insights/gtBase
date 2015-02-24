@@ -1,5 +1,5 @@
-GroupBy <- function(data, group, ...,
-                    fragment.size = 2000000, init.size = 65536, use.mct = TRUE, debug = 0) {
+GroupBy <- function(data, group, ..., fragment.size = 2000000, init.size = 65536,
+                    use.mct = TRUE, debug = 0, states = list()) {
   group <- substitute(group)
   keys <- names(group)[-1]
   check.exprs(group)
@@ -29,5 +29,5 @@ GroupBy <- function(data, group, ...,
   fun <- GLA(GroupBy, group = keys, aggregate = aggregate, debug = debug,
              fragment.size = fragment.size, init.size = init.size, use.mct = use.mct)
 
-  Aggregate(data, fun, inputs, outputs)
+  Aggregate(data, fun, inputs, outputs, states)
 }
