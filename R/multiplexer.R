@@ -23,6 +23,6 @@ MultiplexerItem <- function(agg, value, data) {
   agg <- eval(as.call(agg))
   mapply(assign, names(grokit.copy), grokit.copy, MoreArgs = list(envir = grokit))
   list(inputs = as.symbols(agg$inputs),
-       outputs = add.class(names(agg$schema), "mapping"),
+       outputs = if (is.null(names(agg$schema))) character() else add.class(names(agg$schema), "mapping"),
        gla = agg$gla)
 }

@@ -5,19 +5,45 @@ Aggregate <- function(data, gla, inputs, outputs, states = NULL) {
   check.inputs(data, inputs)
   alias <- create.alias("gla")
 
+  if (is.data(states))
+    states <- list(states)
+
   aggregate <- list(data = data, alias = alias, gla = gla, inputs = inputs,
                     schema = schema, states = states)
   class(aggregate) <- c("GLA", "data")
   aggregate
 }
 
-Transform <- function(data, gt, inputs, outputs, states = NULL) {
+Transition <- function(data, gist, outputs, states) {
+  alias <- create.alias("gist")
+
+  outputs <- set.names(convert.outputs(outputs), outputs)
+  schema <- data$schema
+  schema[names(outputs)] <- outputs
+
+  if (is.data(states))
+    states <- list(states)
+
+  transition <- list(data = data, alias = alias, gist = gist, schema = schema,
+                     states = states)
+  class(transition) <- c("GIST", "data")
+}
+
+Transform <- function(data, gt, inputs, outputs, states = NULL, overwrite = F) {
   check.inputs(data, inputs)
 
   alias <- create.alias("gt")
 
+  if (any(bad <- outputs %in% names(data$schema)) && !overwrite)
+    stop("cannot perform transform due to the following name clashes:\n",
+         paste0("\t", atts[bad], collapse = "\n"))
+
   outputs <- set.names(convert.outputs(outputs), outputs)
-  schema <- c(data$schema, outputs)
+  schema <- data$schema
+  schema[names(outputs)] <- outputs
+
+  if (is.data(states))
+    states <- list(states)
 
   transform <- list(data = data, alias = alias, gt = gt, inputs = inputs,
                     schema = schema, states = states, outputs = outputs)
@@ -25,12 +51,12 @@ Transform <- function(data, gt, inputs, outputs, states = NULL) {
   transform
 }
 
-Generate <- function(data, ...) {
+Generate <- function(data, ..., overwrite = F) {
   args <- as.list(substitute(list(...)))[-1]
   atts <- names(args)
   if (is.null(atts) || any(atts == ""))
     stop("There are missing names for the generated attributes.")
-  if (any(bad <- atts %in% names(data$schema)))
+  if (any(bad <- atts %in% names(data$schema)) && !overwrite)
     stop("cannot perform generation due to the following name clashes:\n",
          paste0("\t", atts[bad], collapse = "\n"))
 
@@ -38,8 +64,9 @@ Generate <- function(data, ...) {
   check.inputs(data, exprs)
 
   generated <- convert.outputs(exprs)
+  schema <- data$schema
+  schema[atts] <- generated
 
-  schema <- c(data$schema, set.names(generated, atts))
   alias <- create.alias("projection")
   generator <- list(data = data, alias = alias, schema = schema, generated = generated)
   class(generator) <- c("Generated", "data")
@@ -56,8 +83,13 @@ Input <- function(file, alias, gi, schema, types = NULL, relation = NULL) {
 
 Filter <- function(data, gf, inputs = character(), states = NULL) {
   check.inputs(data, inputs)
-  alias <- create.alias("gf")
+
   schema <- data$schema
+
+  if (is.data(states))
+    states <- list(states)
+
+  alias <- create.alias("gf")
   filter <- list(data = data, alias = alias, gf = gf, schema = schema,
                  inputs = inputs, states = states)
   class(filter) <- c("GF", "data")

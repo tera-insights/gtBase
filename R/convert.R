@@ -26,13 +26,13 @@ convert.atts <- function(attributes, data = NULL) {
     unlist(lapply(as.list(attributes)[-1], convert.atts, data = data))
   else if (is.call.to(attributes, "@"))
     if (is.null(data))
-      stop("attribute reference used incorrectly.")
+      stop("attribute reference used incorrectly: ", deparse(attributes))
     else
       as.character(long.name(attributes, data))
   else if (is.symbol(attributes))
     as.character(attributes)
   else
-    stop("attribute specified incorrectly.")
+    stop("attribute specified incorrectly:", deparse(attributes))
 }
 
 convert.exprs <- function(...) UseMethod("convert.exprs")
@@ -52,6 +52,9 @@ convert.exprs.call <- function(expressions, data, atts = NULL) {
 }
 
 convert.exprs.list <- function(expressions, data, atts = NULL) {
+  if (length(expressions) == 0)
+    return(character())
+
   ## Do evaluation of .() constructs now. Lazy evaluation is bad because re-binding.
   expressions <- lapply(expressions, eval., data = data)
 

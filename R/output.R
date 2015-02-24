@@ -19,8 +19,7 @@ View.data <- function(data, ...) {
 WriteCSV <- function(data, file, ...) {
   expressions <- as.list(substitute(list(...)))[-1]
   atts <- name.exprs(expressions, data)
-
-  GetResult(data, "csv", atts, file)
+  invisible(GetResult(data, "csv", atts, file))
 }
 
 
@@ -146,7 +145,7 @@ Store <- function(data, relation, ..., .overwrite = FALSE) {
   if (any(bad <- atts %nin% names(data$schema)))
     stop("data attributes not found: ", paste(bad, collapse = ", "))
   if (any(bad <- subtract(schema, names) %nin% names(data$schema)))
-    stop("relation attributes not filled: ", paste(bad, collapse = ", "))
+    stop("relation attributes not filled: ", paste(schema[bad], collapse = ", "))
 
   atts <- c(atts, subtract(schema, names))
   names <- c(names, subtract(schema, names))

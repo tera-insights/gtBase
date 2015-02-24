@@ -61,7 +61,7 @@ Join2 <- function(x, xAtts, y, yAtts, yPassed) {
   } else {
     yPassed <- substitute(yPassed)
     check.atts(yPassed, FALSE)
-    yPassed <- convert.atts(yAtts)
+    yPassed <- convert.atts(yPassed)
   }
 
   group <- convert.schema(yAtts)

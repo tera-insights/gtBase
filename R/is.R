@@ -50,7 +50,7 @@ is.operator <- function(expr) {
 is.symbols <- function(exprs) {
   if (!is.list(exprs))
     exprs <- list(exprs)
-  as.logical(lapply(exprs, is.symbol))
+  sapply(exprs, is.symbol)
 }
 
 is.typedef <- function(names) {

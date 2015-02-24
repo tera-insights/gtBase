@@ -23,8 +23,7 @@ Median <- function(data, inputs = AUTO, outputs = result,
   gla <- GLA(statistics::Median_Binning,
              number.bins = number.bins,
              sort.threshold = sort.threshold)
-  agg <- Aggregate(data, gla, inputs, outputs)
-  agg
+  Aggregate(data, gla, inputs, outputs)
   ## if (exists("grokit.jobid") && !force.frame) {
   ##   View(agg)
   ## } else {
