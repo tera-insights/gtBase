@@ -102,10 +102,10 @@ name.exprs <- function(expressions, data) {
   exprs <- grokit$expressions[atts]
   indices <- as.logical(lapply(exprs, is.symbol))
   if (is.null(names)) {
-    names[indices] <- unlist(lapply(exprs[indices], as.character))
+    names[ indices] <- unlist(lapply(exprs[indices], as.character))
     names[!indices] <- paste0("V", which(!indices))
   } else {
-    names[indices & names == ""] <- unlist(lapply(exprs[indices & names == ""], as.character))
+    names[ indices & names == ""] <- unlist(lapply(exprs[indices & names == ""], as.character))
     names[!indices & names == ""] <- paste0("V", which(!indices & names == ""))
   }
   names(atts) <- names
@@ -174,3 +174,15 @@ as.exprs <- function(expr) {
 
 grokit.library <- function(libraries)
   grokit$libraries <- c(grokit$libraries, as.character(libraries))
+
+get.args <- function(expr) as.list(expr)[-1]
+
+num.args <- function(expr) {
+  if (is.call(expr))
+    ## as.numeric needed because sapply returns lists with 0 args
+    sum(as.numeric(sapply(get.args(expr), num.args)))
+  else
+    1
+}
+
+assert <- function(condition, ...) if (!condition) stop(...)
