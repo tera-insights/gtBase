@@ -122,12 +122,8 @@ Store <- function(data, relation, ..., .overwrite = FALSE) {
     stop("relation should be a symbol literal naming an existing relation.")
 
   relation <- as.character(relation)
-  catalog <- grokit$schemas$catalog
-  relations <- unlist(lapply(catalog, `[[`, "name"))
-  if (!(relation %in% relations))
-    stop("unavailable relation: ", relation)
-  index <- which(relations == relation)
-  schema <- unlist(lapply(catalog[[index]]$attributes, `[[`, "name"))
+  catalog <- get.catalog(relation)
+  schema <- unlist(lapply(catalog$attributes, `[[`, "name"))
 
   file <- tempfile("Q", ".", ".")
   pgy <- paste0(file, "pgy")
@@ -141,7 +137,7 @@ Store <- function(data, relation, ..., .overwrite = FALSE) {
   if (length(atts) != 0 && (is.null(names) || any(names == "")))
     stop("missing attribute names")
   if (any(bad <- names %nin% schema))
-    stop("relation attributes not found: ", pase(bad, collapse = ", "))
+    stop("relation attributes not found: ", paste(bad, collapse = ", "))
   if (any(bad <- atts %nin% names(data$schema)))
     stop("data attributes not found: ", paste(bad, collapse = ", "))
   if (any(bad <- subtract(schema, names) %nin% names(data$schema)))

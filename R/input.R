@@ -1,18 +1,12 @@
 ## relation should be a symbol literal
-Read <- function(relation) {
+Load <- Read <- function(relation) {
   relation <- substitute(relation)
   if (!is.symbol(relation))
     stop("relation should be given as a symbol.")
   relation <- as.character(relation)
+  catalog <- get.catalog(relation)
   alias <- create.alias(relation)
 
-  catalog <- grokit$schemas$catalog
-  relations <- unlist(lapply(catalog, `[[`, "name"))
-  if (!(relation %in% relations))
-    stop("unavailable relation ", relation)
-
-  index <- which(relations == relation)
-  catalog <- catalog[[index]]
   schema <- unlist(lapply(catalog$attributes, `[[`, "name"))
   schema <- set.names(paste0(alias, ".", schema), schema)
 

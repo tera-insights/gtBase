@@ -186,3 +186,13 @@ num.args <- function(expr) {
 }
 
 assert <- function(condition, ...) if (!condition) stop(...)
+
+get.catalog <- function(relation) {
+  catalog <- grokit$schemas$catalog
+  relations <- unlist(lapply(catalog, `[[`, "name"))
+  if (!(relation %in% relations))
+    stop("unavailable relation: ", relation)
+
+  index <- which(relations == relation)
+  catalog <- catalog[[index]]
+}
