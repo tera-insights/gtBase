@@ -21,7 +21,7 @@ Sum <- function(data, inputs = AUTO, outputs = AUTO) {
   agg
 }
 
-Average <- function(data, inputs = AUTO, outputs = AUTO) {
+Average <- Mean <- function(data, inputs = AUTO, outputs = AUTO) {
   inputs <- substitute(inputs)
   check.exprs(inputs)
   if (is.auto(inputs))
