@@ -29,6 +29,7 @@ is.data <- function(x) "data" %in% class(x)
 
 ## First character is alphabetical, rest are alpha-numeric or underscore.
 is.identifier <- function(names) {
+  names <- as.character(names)
   if (length(names) == 0)
     logical()
   else
