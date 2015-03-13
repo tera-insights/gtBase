@@ -14,19 +14,17 @@ Aggregate <- function(data, gla, inputs, outputs, states = NULL) {
   aggregate
 }
 
-Transition <- function(data, gist, outputs, states) {
+Transition <- function(gist, outputs, states) {
   alias <- create.alias("gist")
 
-  outputs <- set.names(convert.outputs(outputs), outputs)
-  schema <- data$schema
-  schema[names(outputs)] <- outputs
+  schema <- set.names(convert.outputs(outputs), outputs)
 
   if (is.data(states))
     states <- list(states)
 
-  transition <- list(data = data, alias = alias, gist = gist, schema = schema,
-                     states = states)
+  transition <- list(alias = alias, gist = gist, schema = schema, states = states)
   class(transition) <- c("GIST", "data")
+  transition
 }
 
 Transform <- function(data, gt, inputs, outputs, states = NULL, overwrite = F) {

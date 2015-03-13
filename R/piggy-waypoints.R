@@ -58,13 +58,12 @@ Translate.GLA <- function(gla) {
 }
 
 Translate.GIST <- function(gist) {
-  c(unlist(lapply(gist$states, Translate)), Translate(gist$data),
+  c(unlist(sapply(gist$states, Translate)),
     setNames(
         paste0(gist$alias, " =",
                "\n", Translate(gist$gist),
-               "\nFROM ", gist$data$alias,
                if (length(gist$states) > 0)
-               paste0("\nREQUIRES", paste0("\n\t", lapply(gist$states, `[[`, "alias"), collapse = ",")),,
+               paste0("\nREQUIRES", paste0("\n\t", lapply(gist$states, `[[`, "alias"), collapse = ",")),
                if (length(gist$schema) > 0)
                paste0("\nAS", paste0("\n\t", Translate.Outputs(gist$schema), collapse = ",")),
                ";\n"),

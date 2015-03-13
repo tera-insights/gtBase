@@ -3,10 +3,11 @@
 ## This set of methods ensures that the output is a list of objects of class
 ## template. The list is necessary as the types will be translated to piggy by a
 ## call to lapply. If a single template exists by itself and not within a length
-## one list, the lapply would instead go over the list representing the type. The
-## structure of convert.types closely mimics that of convert.exprs, as they are
-## both used to produce lists to be processed. Secondly, convert.type does the
-## actual conversion. This function should only ever be called by convert.types.
+## one list, the lapply would instead go over the list representing the type.
+## The structure of convert.types closely mimics that of convert.exprs, as they
+## are both used to produce lists to be processed. Secondly, convert.type does
+## the actual conversion. This function should only ever be called by function
+## convert.types.
 
 ## Types can be specified by the user as a call or a symbol. In the former case,
 ## each argument that is a call is itself processed and then the whole call is
@@ -33,6 +34,8 @@ convert.type.call <- function(type) {
   if (is.call.to(type, "::") && all(is.symbols(as.list(type)))) {
     eval(as.call(c(substitute(TYPE), type)))
   } else {
+    name <- type[[1]]
+    assert(is.identifier(name), "invalid type: ", name)
     args <- as.list(type)[-1]
     names <- names(args)
     args <- ifelse(lapply(args, is.language), lapply(args, convert.types), args)
@@ -61,9 +64,8 @@ convert.type.character <- function(type)
 
 convert.types <- function(types) UseMethod("convert.types")
 
-convert.types.default <- function(types) {
+convert.types.default <- function(types)
   convert.types(list(types))[[1]]
-}
 
 convert.types.call <- function(types) {
   args <- as.list(types)[-1]
