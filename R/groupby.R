@@ -1,4 +1,4 @@
-GroupBy <- function(data, group, ..., fragment.size = 2000000, init.size = 65536,
+GroupBy <- function(data, group, ..., fragment.size = 2000000, init.size = 1024,
                     use.mct = TRUE, debug = 0, states = list()) {
   group <- substitute(group)
   keys <- names(group)[-1]
