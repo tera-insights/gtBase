@@ -1,8 +1,6 @@
-Collect <- function(data, inputs = AUTO, outputs) {
+Collect <- function(data, inputs, outputs, size = NULL) {
   inputs <- substitute(inputs)
-  check.exprs(inputs)
-  if (is.auto(inputs))
-    inputs <- convert.schema(names(data$schema))
+  check.exprs(inputs, FALSE)
   inputs <- convert.exprs(inputs)
 
   if (!missing(outputs)) {
@@ -18,5 +16,5 @@ Collect <- function(data, inputs = AUTO, outputs) {
     outputs <- NULL
   }
 
-  Aggregate(data, GLA(statistics::Collect), inputs, outputs)
+  Aggregate(data, GLA(statistics::Collect, size = size), inputs, outputs)
 }
