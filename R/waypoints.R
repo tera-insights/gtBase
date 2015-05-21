@@ -40,6 +40,8 @@ Transform <- function(data, gt, inputs, outputs, states = NULL, overwrite = F) {
   schema <- data$schema
   schema[names(outputs)] <- outputs
 
+  gt <- convert.args(gt, schema)
+
   if (is.data(states))
     states <- list(states)
 
@@ -49,12 +51,12 @@ Transform <- function(data, gt, inputs, outputs, states = NULL, overwrite = F) {
   transform
 }
 
-Generate <- function(data, ..., overwrite = F) {
+Generate <- function(data, ..., .overwrite = F) {
   args <- as.list(substitute(list(...)))[-1]
   atts <- names(args)
   if (is.null(atts) || any(atts == ""))
     stop("There are missing names for the generated attributes.")
-  if (any(bad <- atts %in% names(data$schema)) && !overwrite)
+  if (any(bad <- atts %in% names(data$schema)) && !.overwrite)
     stop("cannot perform generation due to the following name clashes:\n",
          paste0("\t", atts[bad], collapse = "\n"))
 
@@ -71,9 +73,16 @@ Generate <- function(data, ..., overwrite = F) {
   generator
 }
 
-Input <- function(file, alias, gi, schema, types = NULL, relation = NULL) {
+Input <- function(files, alias, gi, schema, types = NULL, relation = NULL) {
   schema <- set.names(convert.outputs(schema), schema)
-  input <- list(file = file, alias = alias, gi = gi, schema = schema,
+
+  ## This will catch empty file names, as / is always a directory.
+  ## file_test will not match directories, unlike file.exists, hence the usage.
+  files <- ifelse(substr(files, 1, 1) != "/", paste0(getwd(), "/", files), files)
+  assert(all(good <- file_test("-f", files)),
+         "missing files: ", paste(files[!good], collapse = ", "))
+
+  input <- list(files = files, alias = alias, gi = gi, schema = schema,
                 types = types, relation = relation)
   class(input) <- c("GI", "data")
   input
