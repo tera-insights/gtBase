@@ -19,7 +19,7 @@ ask <- function(...) {
   names(queries) <- names
   json.output <- toJSON(queries)
   print(json.output)
-  file <- tempfile("ASK-", getwd(), ".json")
+  file <- tempfile("ASK-", fileext = ".json")
   sink(file)
   cat(json.output)
   sink()

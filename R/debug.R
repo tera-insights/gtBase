@@ -38,7 +38,7 @@ Traceback <- function() {
 throw.error <- function(error) {
   result <- toJSON(error)
   ## print(result)
-  temp <- tempfile("", getwd(), ".json")
+  temp <- tempfile("error", fileext = ".json")
   sink(temp)
   cat(result)
   sink()
