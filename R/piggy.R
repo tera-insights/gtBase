@@ -1,9 +1,5 @@
 Translate <- function(x, ...) UseMethod("Translate")
 
-Translate.file <- function(file) {
-  paste0("\"", file, "\"")
-}
-
 Translate.Template <- function(fun, level = 0) {
   if (!is.null(names(fun$args))) {
     prefixes <- quotate(names(fun$args))
@@ -80,7 +76,7 @@ Translate.Arg <- function(arg, level = 1, prefix = "") {
                    paste0(indent, "\t", lapply(1:nrow(arg), function(i) Translate.Arg(arg[i, ]))),
                    "\n", indent, "]")
         },
-        "character, attribute" = paste0("#", backtick(arg)),
+        "character, attribute" = paste0("#", paste(backtick(strsplit(arg, ".", fixed = TRUE)[[1]]), collapse = ".")),
         "character, mapping" = {
           if (is.null(names(arg)))
             paste0("{", paste(backtick(arg), collapse = ", "), "}")
@@ -153,7 +149,8 @@ Translate.Expr.call <- function(expr, data) {
 
 Translate.Expr.character <- function(expr, data) {
   map <- c("\"" = "\\\"", "\n" = "\\n", "\t" = "\\t", "\\" = "\\\\")
-  quotate(paste(ifelse((chars <- unlist(strsplit(expr, ""))) %in% names(map), map[chars], chars), collapse = ""))
+  quotate(paste(ifelse((chars <- unlist(strsplit(expr, ""))) %in% names(map), map[chars], chars), collapse = ""),
+          empty = FALSE)
 }
 
 Translate.Expr.Date <- function(expr, data) gsub(" 0", " ", format(expr, "DATE(%Y, %m, %d)"))
