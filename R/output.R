@@ -49,9 +49,9 @@ Test <- function(data, message, ...) {
   expressions <- as.list(substitute(list(...)))[-1]
   inputs <- name.exprs(expressions, data)
 
-  file <- tempfile("Q", getwd(), ".")
-  pgy <- paste0(file, "pgy")
-  err <- paste0(file, "err")
+  file <- tempfile("Q")
+  pgy <- paste0(file, ".pgy")
+  err <- paste0(file, ".err")
   piggy <- Translate.Print(data, inputs, "json", "dummy")
   if (getOption("show.piggy", TRUE))
     cat(gsub("\t", "  ", piggy))
@@ -75,11 +75,11 @@ GetResult <- function(data, type, inputs, result, limit = FALSE) {
   ## Creating piggy should not change any fields of grokit permanently
   copy <- as.environment(as.list(grokit, all.names = TRUE))
   on.exit(grokit <- as.environment(as.list(copy, all.names = TRUE)))
-  file <- tempfile("Q", getwd(), ".")
-  pgy <- paste0(file, "pgy")
-  err <- paste0(file, "err") ## for the error
+  file <- tempfile("Q")
+  pgy <- paste0(file, ".pgy")
+  err <- paste0(file, ".err") ## for the error
   if (missing(result))
-    result <- paste0(file, type)
+    result <- paste0(file, ".", type)
   waypoints <- Translate(data)
   waypoints <- waypoints[order(match(names(waypoints), grokit$waypoints))]
   piggy <- paste0(Translate.ID(), Translate.Libraries(), "\n",
@@ -125,8 +125,7 @@ Store <- function(data, relation, ..., .overwrite = FALSE) {
   catalog <- get.catalog(relation)
   schema <- unlist(lapply(catalog$attributes, `[[`, "name"))
 
-  file <- tempfile("Q", ".", ".")
-  pgy <- paste0(file, "pgy")
+  pgy <- tempfile("Q", fileext = ".pgy")
   overwrite <- if (.overwrite) " OVERWRITE" else ""
 
   atts <- substitute(c(...))
@@ -149,20 +148,20 @@ Store <- function(data, relation, ..., .overwrite = FALSE) {
   waypoints <- Translate(data)
   waypoints <- waypoints[order(match(names(waypoints), grokit$waypoints))]
 
-  store <- paste0("STORE ", data$alias, "\n",
-                  "AS\n",
-                  paste0("\t", backtick(relation), ".", backtick(names), " = ",
+  store <- paste0("STORE ", data$alias,
+                  "\nAS",
+                  paste0("\n\t", backtick(relation), ".", backtick(names), " = ",
                          lapply(atts, Translate.Expr.name, data),
-                         collapse = ",\n"), "\n",
-                  "INTO ", relation, overwrite, ";\n")
+                         collapse = ","),
+                  "\nINTO ", relation, overwrite, ";\n")
 
-  piggy <- paste(Translate.ID(), Translate.Libraries(), "\n",
-                 paste(c(Translate(data), store), collapse = "\n"))
+  piggy <- paste0(Translate.ID(), Translate.Libraries(), "\n",
+                  paste(c(waypoints, store), collapse = "\n"))
 
   cat(piggy, file = pgy)
   if (getOption("show.piggy", TRUE))
     cat(gsub("\t", "  ", piggy))
-  code <- system2("grokit", args = c("-w run", paste0(getwd(), "/", pgy)))
+  code <- system2("grokit", args = c("-w run", pgy))
   if (code != 0)
     stop("Write not completed.")
 }
