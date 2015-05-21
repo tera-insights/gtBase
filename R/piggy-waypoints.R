@@ -10,7 +10,9 @@ Translate.Load <- function(data) {
 
 Translate.ReadRelation <- function(data) {
   setNames(
-      paste0(data$alias, " = READ ", paste("FILE ", quotate(data$files), collapse = " "), " USING",
+      paste0(data$alias, " = READ ",
+             paste0("\n  FILE ", quotate(data$files), collapse = ""),
+             "\nUSING",
              "\n", Translate(data$gi),
              "\nATTRIBUTES FROM ", data$relation, ";\n"),
       data$alias)
@@ -18,7 +20,9 @@ Translate.ReadRelation <- function(data) {
 
 Translate.ReadFile <- function(data) {
   setNames(
-      paste0(data$alias, " = READ ", paste("FILE", quotate(data$files), collapse = " "), " USING",
+      paste0(data$alias, " = READ",
+             paste9("\n  FILE ", quotate(data$files), collapse = ""),
+             "\nUSING",
              "\n", Translate(data$gi),
              if (!is.null(data$chunk)) paste("\nCHUNKSIZE", data$chunk),
              "\nATTRIBUTES",
@@ -58,7 +62,7 @@ Translate.GLA <- function(gla) {
 }
 
 Translate.GIST <- function(gist) {
-  c(unlist(sapply(gist$states, Translate)),
+  c(unlist(lapply(gist$states, Translate)),
     setNames(
         paste0(gist$alias, " =",
                "\n", Translate(gist$gist),
