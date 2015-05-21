@@ -28,7 +28,7 @@ long.name <- function(expr, data) {
     stop("attribute reference operator used incorrectly: ", deparse(expr))
 }
 
-eval. <- function(expr, data, envir = parent.frame()) {
+eval. <- function(expr, data, envir = .GlobalEnv) {
   if (is.call(expr))
     if (is.call.to(expr, "."))
       if (length(expr) != 2)
@@ -50,7 +50,8 @@ process <- function(expression, data) {
     as.call(c(expression[[1]], lapply(as.list(expression)[-1], process, data)))
 }
 
-quotate <- function(x, wrapper = '"') {
+## empty: whether to leave empty strings alone.
+quotate <- function(x, wrapper = '"', empty = TRUE) {
   brackets <- c("{" = "}", "(" = ")", "[" = "]", "<" = ">")
   if (is.bracket(as.symbol(wrapper)))
     end <- brackets[[wrapper]]
@@ -58,7 +59,7 @@ quotate <- function(x, wrapper = '"') {
     end <- wrapper
   unlist(lapply(x, function(x) {
     x <- as.character(x)
-    if (x == "")
+    if (empty && x == "")
       x
     else
       paste0(wrapper, x, end)
@@ -113,7 +114,7 @@ name.exprs <- function(expressions, data) {
 }
 
 get.schema <- function() {
-  temp <- tempfile("schema", ".", ".txt")
+  temp <- tempfile("schema", fileext = ".txt")
   system2("grokit-cli", args = c("schema", temp, mget("grokit.jobid", envir = .GlobalEnv, ifnotfound = "")))
   schema <- fromJSON(file = temp)
   file.remove(temp)
