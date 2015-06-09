@@ -1,3 +1,29 @@
+#' Compute Multiple Aggregates Simultaneously
+#'
+#' Performs multiple aggregates on the data and returns the individual results
+#' together in one waypoint.
+#'
+#' The inner GLAs should be specified as a list of calls to other aggregate
+#' functions, such as Sum or Mean. In each of these calls, the \code{data}
+#' argument should be omitted, as it is inferred to be the \code{data} passed to
+#' \code{GroupBy}. Additionally, each argument specifying an inner GLA may be
+#' named. If so, that name is taken to be the output of the corresponding GLA.
+#' This is purely a stylistic shortcut and the normal method of specifying the
+#' outputs can still be used instead.
+#'
+#' The outputs of these inner GLAs should avoid name clashing both with each
+#' other.
+#'
+#' In the case that one inner GLA produces multiple rows and the rest produce a
+#' single row, each of the single row outputs are repeated accordingly.
+#'
+#' If more than one inner GLA produces multiple rows, an error is thrown.
+#'
+#' @param data A \code{\link{waypoint}}.
+#' @param \dots Specification of the inner GLAs. See \sQuote{details} for more
+#'   information.
+#' @return A \code{\link{waypoint}}.
+#' @author Jon Claus, <jonterainsights@@gmail.com>, Tera Insights, LLC.
 Multiplexer <- function(data, ...) {
   aggs <- MultiplexerMake(..., data = data)
   Aggregate(data, aggs$GLA, aggs$inputs, aggs$outputs)

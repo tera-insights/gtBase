@@ -1,21 +1,21 @@
 #' Load a relation.
 #'
-#' \code{Load} loads a binary relation from the disc.
+#' \code{Load} loads a relation from the disc.
 #'
-#' @param relation Usually, a name or character string specifying the relation
-#'   to load. A character string (enclosed in explicit single or double quotes)
-#'   is always taken the relation name.
-#'
-#'   If the value of \code{relation} is a length-one character vector the name
-#'   of the relation is taken to be the value of the only element. Otherwise,
-#'   \code{relation} must be a name or character string.
-#' @return A \code{\link{waypoint}} object whose schema is determined by the
-#'   relation being loaded.
-#' @details
 #' An error is thrown if \code{relation} does not specify a relation that exists
 #' and can be read by the user.
 #'
 #' \code{Read} is simply an alias for \code{Load} that exists for compatibility.
+#'
+#' @param relation Usually, a name or character string specifying the relation
+#'   to load. A character string (enclosed in explicit single or double quotes)
+#'   is always taken as the relation name.
+#'
+#'   If the value of \code{relation} is a length-one character vector the name
+#'   of the relation is taken to be the value of the only element. Otherwise,
+#'   \code{relation} must be a name or character string.
+#' @return A \code{waypoint} object whose schema is determined by the
+#'   relation being loaded.
 
 Load <- function(relation) {
   relation <- substitute(relation)
@@ -48,6 +48,7 @@ Load <- function(relation) {
 #' @rdname Load
 #' @usage Read(relation)
 Read <- Load
+
 
 ReadCSV <- function(files, attributes, skip = 0, sep = ",", simple = FALSE,
                     chunk = NULL, nullable = FALSE, nrows = 100, header = FALSE, ...) {
@@ -95,7 +96,7 @@ ReadCSV <- function(files, attributes, skip = 0, sep = ",", simple = FALSE,
   set.class(c(data, chunk = chunk), c("ReadFile", class(data)))
 }
 
-ReadFile <- function(file, gi, attributes, chunk = NULL, ...) {
+ReadTable <- function(file, gi, attributes, chunk = NULL, ...) {
   if (length(file) != 1 || !is.character(file))
     stop("File must be a length 1 character vector specifying the file path.")
 

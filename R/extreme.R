@@ -1,4 +1,60 @@
-ExtremeTuples <- function(data, ..., inputs = AUTO, outputs = AUTO) {
+#' Extreme Tuples
+#'
+#' The data is filtered to only include tuples that contains the extremities of
+#' the given expressions.
+#'
+#' The extremities to use for the filtering should be provided as a list of
+#' arguments, each of which is in the form \code{fun(expr)} where \code{fun}
+#' is either \code{max} or \code{min} and \code{expr} is an
+#' \code{\link{expression}}.
+#'
+#' Precedence is based on the order in which the arguments are specified. The
+#' result of this GLA is only the tuples whose attributes matched the given
+#' extremities for the given attributes. For example, if the extremities
+#' provided were \code{min{att1}, max{att2}} then the GLA would first filter
+#' the data to include those tuples whose value of \code{att1} was minimized.
+#' Of them, only those whose value of \code{att2} was the maximum on that
+#' subset would be returned.
+#'
+#' Each extremity expression is included in the result. If a name is provided
+#' in the argument list for a corresponding expression, the column is given that
+#' corresponding name. Otherwise, if the expression is a single attribute then
+#' the column is given that attribute name. If not, then the column for that
+#' expression is given a constructed name that is hidden from the user and
+#' guaranteed to not conflict with other column names.
+#'
+#' @param data A \code{\link{waypoint}}.
+#' @param \dots Specification of extremities. See \sQuote{details} for more
+#'   information.
+#' @param inputs A named list of expressions, with the names being used as the
+#'   corresponding outputs. These expressions are outputted in addition to those
+#'   used to specify the extremities.
+#'
+#'   If no name is given and the corresponding  expression is simply an
+#'   attribute, then said attribute is used as the name. Otherwise an error is
+#'   thrown, as there is no reason to include an extra input if corresponding
+#'   output column cannot be referenced later.
+#' @param outputs The usual way to specify the outputs. If both this and names
+#'   for the inputs are given, an error is thrown.
+#' @return A \code{\link{waypoint}} with the designated columns and rows.
+#' @author Jon Claus, <jonterainsights@@gmail.com>, Tera Insights, LLC.
+#' @seealso \code{\link{OrderBy}} for a similarly functioning GLA.
+#' @examples
+#'
+#' ## One attribute test
+#' data <- Read(lineitem100g)
+#' agg <- ExtremeTuples(data, min(l_extendedprice))
+#' result <- as.data.frame(agg)
+#'
+#' ## Three attribute test
+#' ## Despite being secondary, l_extendedprice still achieves its global
+#' ## minimum on the tuples where l_partkey was maximized. However, l_tax
+#' ## does not, as the value in the result is 0.03 and in the overall data
+#' ## the maximum is 0.08.
+#' data <- Read(lineitem100g)
+#' agg <- ExtremeTuples(data, max(l_partkey), min(l_extendedprice), max(l_tax))
+#' result <- as.data.frame(agg)
+ExtremeTuples <- function(data, ..., inputs, outputs) {
   constructor <- ExtremeTuplesMake(...)
   exprs <- grokit$expressions[constructor$inputs]
   atts <- as.character(exprs[as.logical(lapply(exprs, is.symbol))])

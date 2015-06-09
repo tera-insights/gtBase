@@ -1,5 +1,24 @@
-## funcition to ask user for various types of values through the web interface
-ask <- function(...) {
+#' Prompts for user input.
+#'
+#' \code{Ask} asks for user input through the web interface and returns the
+#' given values in a list.
+#'
+#' The following types of inputs are allowed:
+#' \itemize{
+#'   \item File: A file browser is used to select a local file.
+#'   \item Integer: An input box is used to specify an integer value.
+#'   \item Double: An input box is used to specify a decimal value.
+#'   \item Select: A drop-down menu with the given options.
+#'   \item Text: An input box is used to capture a character value.
+#' }
+#'
+#' Additonally, the following options are allowed:
+#' \itemize{
+#'   \item desc: A description displayed in the input box.
+#'   \item max, min: Boundaries on the input.
+#'   \item values: Values that appear in the drop down menu.
+#' }
+Ask <- function(...) {
   queries = as.list(substitute(list(...))[-1])
   if (is.null(names(queries)))
     lapply(queries, function(query) {
@@ -40,14 +59,17 @@ validParameters <- list(
     "textArea" = c("desc", "rows")
     )
 
-checkParameters <- function(type, given) {
+## Checks that the given fields are allowed for a given type of prompt.
+checkParameters <- function(type, fields) {
   expected <- validParameters[[type]]
-  lapply(given, function(parameter) {
+  lapply(fields, function(parameter) {
     if(!(parameter %in% expected))
       warning("For type ", type, ", parameter ", parameter, " not expected.")
   })
 }
 
+
+## Checks if i is an integer (vector) based on value, not class.
 is.integer2 <- function(i) {
   if (!is.numeric(i))
     FALSE
