@@ -8,26 +8,22 @@ Translate.Load <- function(data) {
   setNames(paste0(loading, if (!is.null(data$cluster)) clustering, ";\n"), data$alias)
 }
 
-Translate.ReadRelation <- function(data) {
+Translate.GI <- function(data) {
+  atts <- if (is.character(data$types))
+    paste0("\nATTRIBUTES FROM ", data$relation)
+  else
+    paste0("\nATTRIBUTES",
+           paste0("\n\t", Translate.Outputs(data$schema),
+                  ifelse(sapply(data$types, is.null), "", " : "),
+                  lapply(data$types, Translate.Template),
+                  collapse = ","))
   setNames(
-      paste0(data$alias, " = READ ",
+      paste0(data$alias, " = READ",
              paste0("\n  FILE ", quotate(data$files), collapse = ""),
              "\nUSING",
              "\n", Translate(data$gi),
-             "\nATTRIBUTES FROM ", data$relation, ";\n"),
-      data$alias)
-}
-
-Translate.ReadFile <- function(data) {
-  setNames(
-      paste0(data$alias, " = READ",
-             paste9("\n  FILE ", quotate(data$files), collapse = ""),
-             "\nUSING",
-             "\n", Translate(data$gi),
              if (!is.null(data$chunk)) paste("\nCHUNKSIZE", data$chunk),
-             "\nATTRIBUTES",
-             paste0("\n\t", Translate.Outputs(data$schema), " : ", lapply(data$types, Translate.Template),
-                    collapse = ","),
+             atts,
              ";\n"),
       data$alias)
 }
