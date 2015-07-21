@@ -1,5 +1,9 @@
 Translate <- function(x, ...) UseMethod("Translate")
 
+Translate.NULL <- function(null) ""
+
+Translate.default <- function(x) stop("cannot translate: ", x)
+
 Translate.Template <- function(fun, level = 0) {
   if (!is.null(names(fun$args))) {
     prefixes <- quotate(names(fun$args))
@@ -136,7 +140,7 @@ Translate.Expr.call <- function(expr, data) {
   else if (is.symbol(expr[[1]]))
     paste0(expr[[1]], Translate.Expr.Arguments(expr, data))
   else if (is.call.to(expr[[1]], "::")) ## R requires the 2 arguments to :: to be symbols
-    paste0(expr[[1]][[2]], "::", expr[[1]][[3]], Translate.Expr.Arguments(expr, data))
+    paste0(expr[[1]][[2]], "\\", expr[[1]][[3]], Translate.Expr.Arguments(expr, data))
   else if (is.method(expr[[1]]))
     Translate.Expr.Method(expr, data)
   else if (is.UDF(expr[[1]]))
