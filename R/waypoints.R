@@ -1,6 +1,6 @@
 ## Inputs and outputs should both be un-named character vectors.
 Aggregate <- function(data, gla, inputs, outputs, states = NULL) {
-  schema <- set.names(convert.outputs(outputs), outputs)
+  schema <- setNames(convert.outputs(outputs), outputs)
   gla <- convert.args(gla, schema)
   check.inputs(data, inputs)
   alias <- create.alias("gla")
@@ -17,7 +17,7 @@ Aggregate <- function(data, gla, inputs, outputs, states = NULL) {
 Transition <- function(gist, outputs, states) {
   alias <- create.alias("gist")
 
-  schema <- set.names(convert.outputs(outputs), outputs)
+  schema <- setNames(convert.outputs(outputs), outputs)
 
   if (is.data(states))
     states <- list(states)
@@ -27,7 +27,7 @@ Transition <- function(gist, outputs, states) {
   transition
 }
 
-Transform <- function(data, gt, inputs, outputs, states = NULL, overwrite = F) {
+Transform <- function(data, gt, inputs, outputs, states = NULL, overwrite = FALSE) {
   check.inputs(data, inputs)
 
   alias <- create.alias("gt")
@@ -36,7 +36,7 @@ Transform <- function(data, gt, inputs, outputs, states = NULL, overwrite = F) {
     stop("cannot perform transform due to the following name clashes:\n",
          paste0("\t", atts[bad], collapse = "\n"))
 
-  outputs <- set.names(convert.outputs(outputs), outputs)
+  outputs <- setNames(convert.outputs(outputs), outputs)
   schema <- data$schema
   schema[names(outputs)] <- outputs
 
@@ -51,8 +51,8 @@ Transform <- function(data, gt, inputs, outputs, states = NULL, overwrite = F) {
   transform
 }
 
-Generate <- function(data, ..., .overwrite = F) {
-  args <- as.list(substitute(list(...)))[-1]
+Generate <- function(data, ..., .overwrite = FALSE) {
+  args <- alist(...)
   atts <- names(args)
   if (is.null(atts) || any(atts == ""))
     stop("There are missing names for the generated attributes.")
@@ -67,25 +67,38 @@ Generate <- function(data, ..., .overwrite = F) {
   schema <- data$schema
   schema[atts] <- generated
 
-  alias <- create.alias("projection")
+  alias <- create.alias("generate")
   generator <- list(data = data, alias = alias, schema = schema, generated = generated)
   class(generator) <- c("Generated", "data")
   generator
 }
 
-Input <- function(files, alias, gi, schema, types = NULL, relation = NULL) {
-  schema <- set.names(convert.outputs(schema), schema)
+## schema should either be a character naming a relation or a named list of type objects
+Input <- function(files, gi, outputs, chunk = NULL) {
+  assert(isTRUE(is.relation(outputs)) || is.list(outputs),
+         "illegal outputs argument")
 
-  ## This will catch empty file names, as / is always a directory.
-  ## file_test will not match directories, unlike file.exists, hence the usage.
-  files <- ifelse(substr(files, 1, 1) != "/", paste0(getwd(), "/", files), files)
+  if (isTRUE(is.relation(outputs))) {
+    schema <- get.attributes(outputs)
+    schema <- setNames(paste0(outputs, ".", schema), schema)
+  } else {
+    assert(!is.null(names(outputs)) && all(names(outputs) != ""),
+           "outputs has missing names.")
+    schema <- names(outputs)
+    schema <- setNames(convert.outputs(schema), schema)
+  }
+
   assert(all(good <- file_test("-f", files)),
          "missing files: ", paste(files[!good], collapse = ", "))
+  files <- normalizePath(files)
 
-  input <- list(files = files, alias = alias, gi = gi, schema = schema,
-                types = types, relation = relation)
-  class(input) <- c("GI", "data")
-  input
+  gi <- convert.args(gi, schema)
+
+  alias <- create.alias("gi")
+
+  structure(list(files = files, alias = alias, gi = gi,
+                 schema = schema, outputs = outputs, chunk = chunk),
+            class = c("GI", "data"))
 }
 
 Filter <- function(data, gf, inputs = character(), states = NULL) {
@@ -102,3 +115,54 @@ Filter <- function(data, gf, inputs = character(), states = NULL) {
   class(filter) <- c("GF", "data")
   filter
 }
+
+#' Load a relation.
+#'
+#' \code{Load} loads a relation from the disc.
+#'
+#' An error is thrown if \code{relation} does not specify a relation that exists
+#' and can be read by the user.
+#'
+#' \code{Read} is simply an alias for \code{Load} that exists for compatibility.
+#'
+#' @param relation Usually, a name or character string specifying the relation
+#'   to load. A character string (enclosed in explicit single or double quotes)
+#'   is always taken as the relation name.
+#'
+#'   If the value of \code{relation} is a length-one character vector the name
+#'   of the relation is taken to be the value of the only element. Otherwise,
+#'   \code{relation} must be a name or character string.
+#' @return A \code{waypoint} object whose schema is determined by the
+#'   relation being loaded.
+Load <- function(relation) {
+  relation <- substitute(relation)
+  if (!is.symbol(relation))
+    stop("relation should be given as a symbol.")
+  relation <- as.character(relation)
+  catalog <- get.catalog(relation)
+  alias <- create.alias(relation)
+
+  schema <- unlist(lapply(catalog$attributes, `[[`, "name"))
+  schema <- setNames(paste0(alias, ".", schema), schema)
+
+  if (!is.null(catalog$cluster)) {
+    cluster <- paste0(alias, ".", catalog$cluster)
+    index <- which(schema == cluster)
+    type <- catalog$attributes[[index]]$type$node_data
+    if (!is.character(type)) ## dealing with templated type.
+        type <- type$name
+    grokit$cluster[[cluster]] <- list(lower = -Inf, upper = Inf,
+                                      type = convert.typename(type))
+  } else {
+    cluster <- NULL
+  }
+
+  data <- list(relation = relation, alias = alias, schema = schema, cluster = cluster)
+  class(data) <- c("Load", "data")
+  data
+}
+
+#' @rdname Load
+#' @usage Read(relation)
+Read <- Load
+
