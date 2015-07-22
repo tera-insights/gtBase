@@ -17,7 +17,7 @@ Join <- function(x, xAtts, y, yAtts) {
   xJoinPassed <- x$schema[xAtts[!xClashed]]
   xClashed <- x$schema[xAtts[xClashed]]
   yClashed <- yAtts %in% names(x$schema) & !direct
-  yJoinPassed <- set.names(x$schema[xAtts[!yClashed]], yAtts[!yClashed])
+  yJoinPassed <- setNames(x$schema[xAtts[!yClashed]], yAtts[!yClashed])
   yClashed <- y$schema[yAtts[yClashed]]
 
   xNames <- x$schema[xAtts]
