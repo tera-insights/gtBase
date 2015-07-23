@@ -9,13 +9,13 @@ Translate.Load <- function(data) {
 }
 
 Translate.GI <- function(data) {
-  atts <- if (is.character(data$types))
-    paste0("\nATTRIBUTES FROM ", data$relation)
+  atts <- if (is.character(data$outputs))
+    paste0("\nATTRIBUTES FROM ", data$outputs)
   else
     paste0("\nATTRIBUTES",
            paste0("\n\t", Translate.Outputs(data$schema),
-                  ifelse(sapply(data$types, is.null), "", " : "),
-                  lapply(data$types, Translate.Template),
+                  ifelse(sapply(data$outputs, is.null), "", " : "),
+                  lapply(data$outputs, Translate.Template),
                   collapse = ","))
   setNames(
       paste0(data$alias, " = READ",
