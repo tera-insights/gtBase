@@ -37,6 +37,6 @@ data$schema ## produces a character vector
 str(data) ## fully details the structure for illustration's sake
 }
 \author{
-Jon Claus, <jonterainsights@gmail.com>, Tera Insights LLC
+Jon Claus, <jonterainsights@gmail.com>, Tera Insights, LLC
 }
 

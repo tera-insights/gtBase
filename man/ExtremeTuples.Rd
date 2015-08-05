@@ -9,20 +9,24 @@ ExtremeTuples(data, ..., inputs, outputs)
 \arguments{
 \item{data}{A \code{\link{waypoint}}.}
 
-\item{\dots}{Specification of extremities. See \sQuote{details} for more
-information.}
-
-\item{input}{A named list of expressions, with the names being used as the
+\item{inputs}{A named list of expressions, with the names being used as the
   corresponding outputs. These expressions are outputted in addition to those
   used to specify the extremities.
 
   If no name is given and the corresponding  expression is simply an
-  attribute, then said attribute is used as the name.
-  Otherwise an error is thrown, as there is no reason to include an extra
-  input if corresponding output column cannot be referenced later.}
+  attribute, then said attribute is used as the name. Otherwise an error is
+  thrown, as there is no reason to include an extra input if corresponding
+  output column cannot be referenced later.
 
-\item{output}{The usual way to specify the outputs. If both this and names
-for the inputs are given, an error is thrown.}
+  If this is not given, then each attribute of \code{data} that is not used
+  exactly as an expression for comparison is included.}
+
+\item{outputs}{The usual way to specify the outputs. If both this and names
+for the \code{inputs} are given, a warning is given and \code{outputs} is
+used.}
+
+\item{\dots}{Specification of extremities. See \sQuote{details} for more
+information.}
 }
 \value{
 A \code{\link{waypoint}} with the designated columns and rows.
@@ -32,9 +36,10 @@ The data is filtered to only include tuples that contains the extremities of
 the given expressions.
 }
 \details{
-The extremities to use for the filtering is provided as a list of arguments,
-each of which is in the form \code{fun(expr)} where \code{fun} is either
-\code{max} or \code{min} and \code{expr} is an \code{\link{expression}}.
+The extremities to use for the filtering should be provided as a list of
+arguments, each of which is in the form \code{fun(expr)} where \code{fun}
+is either \code{max} or \code{min} and \code{expr} is an
+\code{\link{expression}}.
 
 Precedence is based on the order in which the arguments are specified. The
 result of this GLA is only the tuples whose attributes matched the given
@@ -67,7 +72,7 @@ agg <- ExtremeTuples(data, max(l_partkey), min(l_extendedprice), max(l_tax))
 result <- as.data.frame(agg)
 }
 \author{
-Jon Claus, <jonterainsights@gmail.com>, Tera Insights LLC
+Jon Claus, <jonterainsights@gmail.com>, Tera Insights, LLC.
 }
 \seealso{
 \code{\link{OrderBy}} for a similarly functioning GLA.

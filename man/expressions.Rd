@@ -6,14 +6,6 @@
 \description{
 Expressions are used as inputs for various waypoints.
 }
-\details{
-An expression specified in the following manner:
-
-\begin{description}
-\item[Test] this is a test.
-\item[foo] blah
-\end{description}
-}
 \note{
 For the most part, the expression is not evaluated at all. Instead, it
 is parsed and its abstract syntax tree is visited and translated.
@@ -27,6 +19,6 @@ a <- 1
 (att1 + .(a)) * att3
 }
 \author{
-Jon Claus, <jonterainsights@gmail.com>, Tera Insights LLC
+Jon Claus, <jonterainsights@gmail.com>, Tera Insights, LLC
 }
 

@@ -12,5 +12,19 @@ given values in a list.
 }
 \details{
 The following types of inputs are allowed:
+\itemize{
+  \item File: A file browser is used to select a local file.
+  \item Integer: An input box is used to specify an integer value.
+  \item Double: An input box is used to specify a decimal value.
+  \item Select: A drop-down menu with the given options.
+  \item Text: An input box is used to capture a character value.
+}
+
+Additonally, the following options are allowed:
+\itemize{
+  \item desc: A description displayed in the input box.
+  \item max, min: Boundaries on the input.
+  \item values: Values that appear in the drop down menu.
+}
 }
 
