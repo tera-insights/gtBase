@@ -1,32 +1,3 @@
-#' Basic GLAs
-#'
-#' Computes the given basic statistics for each of the specified columns.
-#'
-#' If \code{outputs} is not set to \code{AUTO}, then the attributes names of
-#' the result will be those specified by outputs.
-#'
-#' @name basic
-#' @aliases Sum Average Count
-#' @param data an object of class \code{"\link{data}"}.
-#' @param inputs which attributes of \code{data} to perform the GLA on.
-#' @param outputs the desired column names of the result.
-#' @return An object of class \code{"\link{data}"} with attributes names as
-#' discussed above. Upon conversion to a data frame, there will be a single
-#' row.
-#' @section AUTO: In the case of \code{AUTO} for \code{inputs}, all attributes
-#' of the data are used. If \code{outputs} is \code{AUTO}, the names of the
-#' result are \code{V0}, \code{V1}, and so forth.
-#' @author Jon Claus, <jonterainsights@@gmail.com>, Tera Insights, LLC
-#' @seealso \code{\link{Summary}}
-#' @examples
-#'
-#' data <- Read(lineitem100g)
-#' agg <- Sum(data, inputs = c(l_discount, l_tax), outputs =
-#'   c(sum_discout, sum))
-#' result <- as.data.frame(agg)
-#'
-NULL
-
 #' Abstract Data Objects
 #'
 #' Large scale data is represented abstractly in the GrokIt system. Rather than
@@ -102,15 +73,6 @@ NULL
 #' columns of the data that the GLA will operate on and \code{outputs} is list
 #' of names for the columns in the result.
 #'
-#' \code{AUTO} is a reserved word in the Grokit system that is used to infer
-#' inputs or outputs. Although the exact interpretation depends on the GLA,
-#' \code{inputs = AUTO} typically selects all attributes in the relation and
-#' \code{outputs = AUTO} names the result in the same manner as
-#' \code{read.csv}, i.e. \code{"V0"}, \code{"V1"}, ...
-#'
-#' For most actions that take inputs and outputs, there will be a section in
-#' the help describing precisely how \code{AUTO} behaves.
-#'
 #' It should be note that these constructs are only valid in the specification
 #' of arguments to an appropiate GLA. See \sQuote{Examples} for more
 #' information.
@@ -120,7 +82,6 @@ NULL
 #' @param ...  A list expressions to be used as inputs for the current action.
 #' See \code{\link{expressions}} for more information.
 #' @param expr An expression in the same manner as above.
-#' @param AUTO A special keyword in the R-grokit system. It is interpreted
 #' differently in individual contexts; in general, it acts much like the SQL
 #' \code{*} construct for inputs.
 #' @note The expressions for \code{inputs} and \code{outputs} are never
@@ -133,19 +94,13 @@ NULL
 #'
 #' ## Proper specification of inputs and outputs
 #' data <- Read(lineitem100g)
-#' result <- Sum(data, inputs = c(l_discount, l_tax), outputs =
-#' c(sum_discout, sum), force.frame = TRUE)
+#' result <- Sum(data, inputs = c(l_discount, l_tax),
+#' outputs = c(sum_discout, sum))
 #' print(result)
-#'
-#' ## Usage of AUTO for both inputs and outputs
-#' data <- Read(lineitem100g)
-#' result <- Sum(data, force.frame = TRUE)
-#' result
 #'
 #' ## Improper assignment
 #' data <- Read(lineitem100g)
 #' inputs <- c(l_discount, l_tax) ## error thrown here
-#' result <- Sum(data, inputs = inputs, outputs = c(sum_discout, sum),
-#' force.frame = TRUE)
+#' result <- Sum(data, inputs = inputs, outputs = c(sum_discout, sum))
 NULL
 

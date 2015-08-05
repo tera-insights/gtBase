@@ -1,18 +1,14 @@
 ## attributes should be language
-check.atts <- function(attributes, auto = TRUE) {
+check.atts <- function(attributes) {
   if (is.call.to(attributes, "c") && !all(is.attributes(as.list(attributes)[-1])))
-    stop("attributes specified incorrectly.")
+    stop("attributes specified incorrectly: ", deparse(attributes))
   else if (!is.call.to(attributes, "c") && !is.attributes(list(attributes)))
-    stop("attribute specified incorrectly.")
-  else if (is.auto(attributes) && !auto)
-    stop("AUTO used illegally.")
+    stop("attribute specified incorrectly:", deparse(attributes))
 }
 
-check.exprs <- function(expressions, auto = TRUE) {
+check.exprs <- function(expressions) {
   if (!(length(expressions) == 1 || is.call(expressions)))
-    stop("expressions specified incorrectly.")
-  else if (is.auto(expressions) && !auto)
-    stop("AUTO used illegally.")
+    stop("expressions specified incorrectly: ", deparse(expressions))
 }
 
 check.inputs <- function(x, schema) {

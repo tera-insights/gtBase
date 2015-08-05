@@ -1,11 +1,9 @@
 is.attributes <- function(attributes) {
+  if (!is.list(attributes))
+    attributes <- list(attributes)
   unlist(lapply(attributes, function(attribute) {
     all(is.symbols(as.list(attribute))) && (length(attribute) == 1 || is.call.to(attribute, "@"))
   }))
-}
-
-is.auto <- function(attributes) {
-  is.symbol(attributes) && attributes == "AUTO"
 }
 
 is.bracket <- function(expr) {
@@ -27,6 +25,11 @@ is.calls <- function(exprs) {
 
 is.data <- function(x) "data" %in% class(x)
 
+## This checks if the input is a character referring to processed expressions.
+is.inputs <- function(exprs) {
+  is.character(exprs) && all(exprs %in% names(grokit$expressions))
+}
+
 ## First character is alphabetical, rest are alpha-numeric or underscore.
 is.identifier <- function(names) {
   names <- as.character(names)
@@ -38,6 +41,10 @@ is.identifier <- function(names) {
 }
 
 is.method <- function(expr) is.call.to(expr, "$")
+
+## Checks if every element of an object is named.
+is.named <- function(obj)
+  length(obj) == 0 || (!is.null(names(obj)) && all(names(obj) != ""))
 
 is.operator <- function(expr) {
   operators <- c("$", "@", "[", "[[", "^", "-", "+", ":", "*",

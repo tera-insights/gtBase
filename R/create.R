@@ -28,7 +28,7 @@ Create <- function(name, ...) {
     stop("invalid name given: ", deparse(name))
   if (as.character(name) %in% unlist(lapply(get.schema()$catalog, `[[`, "name")))
     stop("cannot overwrite relation: ", name)
-  types <- convert.types(substitute(c(...)))
+  types <- lapply(as.list(substitute(list(...)))[-1], convert.type)
   if (length(types) == 0)
     stop("schema cannot be empty")
   schema <- names(types)

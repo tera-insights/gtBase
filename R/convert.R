@@ -1,4 +1,4 @@
-## convert.args is used to rename template that make use of inputs names to include the long names.
+## convert.args is used to rename template args that make use of inputs names to include the long names.
 convert.args <- function(arg, renaming) UseMethod("convert.args")
 
 convert.args.attribute <- function(att, renaming) {
@@ -13,7 +13,7 @@ convert.args.default <- function(arg, renaming) arg
 convert.args.list <- function(list, renaming) lapply(list, convert.args, renaming)
 
 convert.args.mapping <- function(mapping, renaming) {
-  set.class(set.names(as.character(lapply(mapping, convert.args.attribute, renaming)), names(mapping)), "mapping")
+  set.class(setNames(as.character(lapply(mapping, convert.args.attribute, renaming)), names(mapping)), "mapping")
 }
 
 convert.args.Template <- function(template, renaming) {
@@ -63,16 +63,34 @@ convert.exprs.list <- function(expressions, data, atts = NULL) {
   else if (length(atts) != length(expressions))
     stop("in convert.exprs, atts must be the same length as expressions.")
   grokit$expressions[atts] <- expressions
-  atts
+  structure(atts, names = names(expressions))
 }
 
 convert.exprs.name <- function(expressions, data, atts = NULL) {
-  if (is.auto(expressions))
-    stop("AUTO used illegally.")
-  else if (expressions == "")
+  if (expressions == "")
     character()
   else
     convert.exprs(list(expressions), data, atts)
+}
+
+## This function takes previously constructed inputs, i.e a character vector
+## of names referenced in grokit$expressions, and re-converts them as if they
+## had been entered again into another waypoint.
+convert.inputs <- function(inputs) {
+  assert(is.inputs(inputs), "convert.inputs passed invalid inputs.")
+  convert.exprs(grokit$expressions[inputs])
+}
+
+## Given inputs with a "names" attribute, this returns the names attribute.
+## If null, the attribute is converted to a character vector with one empty
+## string per input. If no "names" attributes is present, it is treated as
+## null per the standard behavior of `attr`.
+convert.names <- function(inputs) {
+  names <- names(inputs)
+  if (is.null(names))
+    rep("", length(inputs))
+  else
+    names
 }
 
 convert.outputs <- function(names, update = TRUE) {
@@ -87,8 +105,10 @@ convert.outputs <- function(names, update = TRUE) {
   }))
 }
 
+## This is used to treat a character vector of attributes name as inputs.
 convert.schema <- function(schema) {
-  as.call(c(as.symbol("c"), lapply(schema, as.symbol)))
+  assert(is.character(schema), "illegal input: ", schema)
+  convert.exprs(lapply(schema, as.symbol))
 }
 
 convert.typename <- function(type) {

@@ -72,8 +72,8 @@
 #'   values are ignored.
 #' @param sep The field delimiter, given as a length-one character vector. This
 #'   single element should either be the word "TAB" or a single ASCII character,
-#'   escape characters included. For example, "\t", " ", and "\\" work. The only
-#'   exception to this is "\n" for obvious reasons.
+#'   escape characters included. For example, "\\t", " ", and "\\" work. The
+#'   only exception to this is "\\n" for obvious reasons.
 #' @param simple Whether quotes are allowed. If not, then the fields are split
 #'   whenever the delimiter is seen, regardless of whether it is inside a quoted
 #'   string. Using a simple algorithm is significantly faster than not and is
@@ -92,7 +92,7 @@
 #'   and CR+LF behaviour is currently supported. See
 #'   \href{https://en.wikipedia.org/wiki/Newline}{here} for more information.
 #' @param nullable An object used to specify the strings for each column that
-#'   are to be interpreted as \squote{NULL} values, somewhat analogous to the
+#'   are to be interpreted as \sQuote{NULL} values, somewhat analogous to the
 #'   \code{na.strings} arguments. However, it differs in that each attribute
 #'   can have at most one null string and attributes can have different null
 #'   strings, where a null string is a string that is interpreted as a
@@ -273,11 +273,14 @@ ReadCSV <- function(files, attributes, header = FALSE, skip = 0, nrows = -1,
   is.valid <- function(value)
     (is.character(value) || is.logical(value)) && length(value) == 1
 
+  ## The function for checking the list format of nullable.
+  ## TODO: Currently, named nullable arguments aren't supported for long names,
+  ## as convert.args won't change list names.
   validate <- function(name, value)
-    if (!is.null(name) && name != "") {
+    if (name != "") {
       assert(name %in% col.names && is.valid(value),
              "illegal nullable name-value pair: ", name, " ", value)
-      list(attr = set.class(name, "attribute"), null = value)
+      value
     } else if (is.list(value)) {
       assert(!is.null(value$attr) && value$attr %in% col.names,
              "illegal nullable element: ", value)
@@ -296,37 +299,46 @@ ReadCSV <- function(files, attributes, header = FALSE, skip = 0, nrows = -1,
   assert(is.valid(nullable) || is.list(nullable))
   if (is.list(nullable))
       nullable <- mapply(validate, convert.names(nullable), nullable, SIMPLIFY = FALSE)
+  ## convert.names in conjunction with mapply might cause all names to be empty but not null.
+  if (all(names(nullable) == ""))
+    names(nullable) <- NULL
 
   alias <- create.alias("read")
 
+  ## gi <- GI(base::CSVReader,
+  ##          skip = skip + header, n = nrows, sep = sep, simple = simple,
+  ##          quote = quote, escape = escape, trim.cr = trim.cr, nullable = nullable)
+
+  ## Conditional arguments are only done because the piggy parse can't handle "\\".
+  ## TODO: Change this back to the above code once escape characters work.
   gi <- GI(base::CSVReader,
            skip = skip + header, n = nrows, sep = sep, simple = simple,
-           quote = quote, escape = escape, trim.cr = trim.cr, nullable = nullable)
+           trim.cr = trim.cr, nullable = nullable)
+  if (!missing(quote))
+    gi$args$quote <- quote
+  if (!missing(escape))
+    gi$args$escape <- escape
 
   Input(files, gi, attributes)
 }
 
-as.data <- function(x, types) {
-  if (!is.data.frame(x))
-    x <- as.data.frame(x)
+as.data <- function(data, types) {
+  if (!is.data.frame(data))
+    data <- as.data.frame(data)
 
   file <- tempfile("DF-", fileext = ".csv")
-  write.table(x, file, quote = FALSE, sep = "\t", row.names = FALSE, col.names = FALSE)
+  write.table(data, file, quote = FALSE, sep = "\t", row.names = FALSE, col.names = FALSE)
   class(file) <- c("file")
 
-  schema <- names(x)
-  names(schema) <- schema
-
   if (missing(types))
-    types <- as.list(x)
+    types <- as.list(data)
   else
-    types <- substitute(types)
-  types <- convert.types(types)
+    types <- as.list(substitute(types))[-1]
+  types <- lapply(types, convert.type)
 
-  alias <- create.alias("read")
+  attributes <- setNames(types, names(data))
 
   gi <- GI(base::CSVReader, skip = 0, simple = TRUE, sep = "tab")
 
-  data <- Input(file = file, alias = alias, gi = gi, schema = schema, types = types)
-  add.class(data, "ReadFile")
+  Input(file, gi, attributes)
 }

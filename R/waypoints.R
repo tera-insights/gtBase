@@ -52,7 +52,7 @@ Transform <- function(data, gt, inputs, outputs, states = NULL, overwrite = FALS
 }
 
 Generate <- function(data, ..., .overwrite = FALSE) {
-  args <- alist(...)
+  args <- as.list(substitute(list(...)))[-1]
   atts <- names(args)
   if (is.null(atts) || any(atts == ""))
     stop("There are missing names for the generated attributes.")

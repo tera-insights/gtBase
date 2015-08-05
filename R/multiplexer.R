@@ -42,11 +42,11 @@ MultiplexerMake <- function(..., data) {
 }
 
 MultiplexerItem <- function(agg, value, data) {
-  agg <- c(as.list(agg), data = list(data))
+  agg[["data"]] <- quote(data)
   if (value != "")
-    agg <- c(agg, outputs = as.symbol(value))
+    agg[["outputs"]] <- as.symbol(value)
   grokit.copy <- as.list(grokit)[c("alias", "outputs")]
-  agg <- eval(as.call(agg))
+  agg <- eval(agg)
   mapply(assign, names(grokit.copy), grokit.copy, MoreArgs = list(envir = grokit))
   list(inputs = as.symbols(agg$inputs),
        outputs = if (is.null(names(agg$schema))) character() else add.class(names(agg$schema), "mapping"),

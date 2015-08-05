@@ -28,7 +28,7 @@ as.data.frame.data <- function(data, ...) {
   atts <- name.exprs(expressions, data)
 
   file <- GetResult(data, "csv", atts)
-  result <- read.csv(file, sep = "|")
+  result <- read.csv(file, sep = "|", stringsAsFactors = FALSE)
   if (!getOption("keep.files", TRUE))
     file.remove(file)
   result

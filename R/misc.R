@@ -133,13 +133,6 @@ set.class <- function(x, class) {
   x
 }
 
-set.names <- function(x, names) {
-  if (!is.vector(x))
-    x <- as.list(x)
-  names(x) <- names
-  x
-}
-
 as.symbols <- function(x) lapply(x, as.symbol)
 
 create.alias <- function(type = "alias") {
@@ -188,6 +181,8 @@ num.args <- function(expr) {
 
 assert <- function(condition, ...) if (!condition) stop(...)
 
+warning.if <- function(condition, ...) if (condition) warning(...)
+
 get.catalog <- function(relation) {
   catalog <- grokit$schemas$catalog
   relations <- unlist(lapply(catalog, `[[`, "name"))
@@ -195,5 +190,46 @@ get.catalog <- function(relation) {
     stop("unavailable relation: ", relation)
 
   index <- which(relations == relation)
-  catalog <- catalog[[index]]
+  catalog[[index]]
+}
+
+get.relations <- function() sapply(grokit$schemas$catalog, `[[`, "name")
+
+get.attributes <- function(relation) sapply(get.catalog(relation)$attributes, `[[`, "name")
+
+is.relation <- function(relation)
+  relation %in% get.relations()
+
+## This function is used to simplify the process of processing the inputs and
+## outputs of the parent environment that calls it. Because it intercepts the
+## parser and evaluates statements in the parent environment, its usage is quite
+## risky and restrained. It should only be called by a function used to create a
+## waypoint that has arguments inputs and outputs.
+process.io <- function(i.def, o.def, names = T) {
+  if (eval.parent(quote(missing(inputs)))) {
+    inputs <- i.def
+  } else {
+    if (inherits(tryCatch(is.inputs(inputs)), "error")) {
+      inputs <- quote(inputs)
+      check.exprs(inputs)
+      inputs <- convert.exprs(inputs)
+    } else {
+      inputs <- convert.inputs(inputs)
+    }
+  }
+
+  if (missing(outputs)) {
+    outputs <- convert.names(inputs)
+    missing <- which(outputs == "")
+    exprs <- grokit$expressions[inputs[missing]]
+    if (all(is.symbols(exprs)))
+      outputs[missing] <- as.character(exprs)
+    else
+      stop("no name given for complex inputs:",
+           paste("\n\t", lapply(exprs, deparse), collapse = ""))
+  } else {
+    if (!is.null(names(inputs)))
+      warning("both outputs and named inputs given. outputs used.")
+    outputs <- convert.atts(quote(outputs))
+  }
 }

@@ -44,8 +44,6 @@ GroupBy <- function(data, group, ..., fragment.size = 2000000, init.size = 1024,
   group <- substitute(group)
   keys <- names(group)[-1]
   check.exprs(group)
-  if (is.auto(group))
-    stop("group is not allowed to be AUTO.")
   group <- convert.exprs(group, data)
 
   ## key name used if given, else the key if said key is a symbol, else hidden name.
