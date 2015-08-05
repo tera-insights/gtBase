@@ -64,10 +64,7 @@ CountDistinct <- function(data, inputs, outputs = count) {
 
   outputs <- substitute(outputs)
   check.atts(outputs)
-  if (is.auto(outputs))
-    outputs <- "count"
-  else
-    outputs <- convert.atts(outputs)
+  outputs <- convert.atts(outputs)
   if (length(outputs) != 1)
     stop("There must be exactly one output specified.")
 

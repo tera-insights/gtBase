@@ -32,105 +32,120 @@
 #'   attribute, then said attribute is used as the name. Otherwise an error is
 #'   thrown, as there is no reason to include an extra input if corresponding
 #'   output column cannot be referenced later.
-#' @param output The usual way to specify the outputs. If both this and names
-#'   for the inputs are given, an error is thrown.
+#' @param outputs The usual way to specify the outputs. If both this and names
+#'   for the \code{inputs} are given, a warning is given and \code{outputs} is
+#'   used.
 #' @return A \code{\link{waypoint}} with a single row. See \sQuote{details} for
 #'   more information.
 #' @author Jon Claus, <jonterainsights@@gmail.com>, Tera Insights, LLC.
 NULL
 
 #' @rdname univariate
-Sum <- function(data, input, output) {
-  inputs <- substitute(inputs)
-  check.exprs(inputs)
-  if (is.auto(inputs))
+Sum <- function(data, inputs, outputs) {
+  if (missing(inputs)) {
     inputs <- convert.schema(names(data$schema))
-  inputs <- convert.exprs(inputs, data)
+  } else {
+    inputs <- substitute(inputs)
+    check.exprs(inputs)
+    inputs <- convert.exprs(inputs)
+  }
 
-  outputs <- substitute(outputs)
-  check.atts(outputs)
-  if (is.auto(outputs))
-    if (all(is.symbols(grokit$expressions[inputs])))
-      outputs <- unlist(lapply(grokit$expressions[inputs], as.character))
+  if (missing(outputs)) {
+    outputs <- convert.names(inputs)
+    missing <- which(outputs == "")
+    exprs <- grokit$expressions[inputs[missing]]
+    if (all(is.symbols(exprs)))
+      outputs[missing] <- as.character(exprs)
     else
-      stop("outputs can only be AUTO when inputs are all attributes.")
-  else
-    outputs <- convert.atts(outputs)
-  if (length(outputs) != length(inputs))
-    stop("There must be exactly one output specified per input.")
-
+      stop("no name given for complex inputs:",
+           paste("\n\t", lapply(exprs, deparse), collapse = ""))
+  } else {
+    if (!is.null(names(inputs)))
+      warning("both outputs and named inputs given. outputs used.")
+    outputs <- convert.atts(substitute(outputs))
+  }
   Aggregate(data, GLA(Sum), inputs, outputs)
 }
 
 #' @rdname univariate
 Mean <- function(data, inputs = AUTO, outputs = AUTO) {
-  inputs <- substitute(inputs)
-  check.exprs(inputs)
-  if (is.auto(inputs))
+  if (missing(inputs)) {
     inputs <- convert.schema(names(data$schema))
-  inputs <- convert.exprs(inputs, data)
+  } else {
+    inputs <- substitute(inputs)
+    check.exprs(inputs)
+    inputs <- convert.exprs(inputs)
+  }
 
-  outputs <- substitute(outputs)
-  check.atts(outputs)
-  if (is.auto(outputs))
-    if (all(is.symbols(grokit$expressions[inputs])))
-      outputs <- unlist(lapply(grokit$expressions[inputs], as.character))
+  if (missing(outputs)) {
+    outputs <- convert.names(inputs)
+    missing <- which(outputs == "")
+    exprs <- grokit$expressions[inputs[missing]]
+    if (all(is.symbols(exprs)))
+      outputs[missing] <- as.character(exprs)
     else
-      stop("outputs can only be AUTO when inputs are all attributes.")
-  else
-    outputs <- convert.atts(outputs)
-  if (length(outputs) != length(inputs))
-    stop("There must be exactly one output specified per input.")
-
+      stop("no name given for complex inputs:",
+           paste("\n\t", lapply(exprs, deparse), collapse = ""))
+  } else {
+    if (!is.null(names(inputs)))
+      warning("both outputs and named inputs given. outputs used.")
+    outputs <- convert.atts(substitute(outputs))
+  }
   Aggregate(data, GLA(Average), inputs, outputs)
 }
 
 #' @rdname univariate
 Min <- function(data, inputs = AUTO, outputs = AUTO) {
-  inputs <- substitute(inputs)
-  check.exprs(inputs)
-  if (is.auto(inputs))
-    inputs <- convert.schema(names(data$schema))
-  inputs <- convert.exprs(inputs, data)
+  if (missing(inputs)) {
+    inputs <- convert.schema(subtract(names(data$schema), atts))
+  } else {
+    inputs <- substitute(inputs)
+    check.exprs(inputs)
+    inputs <- convert.exprs(inputs)
+  }
 
-  outputs <- substitute(outputs)
-  check.atts(outputs)
-  if (is.auto(outputs))
-    if (all(is.symbols(grokit$expressions[inputs])))
-      outputs <- unlist(lapply(grokit$expressions[inputs], as.character))
+  if (missing(outputs)) {
+    outputs <- convert.names(inputs)
+    missing <- which(outputs == "")
+    exprs <- grokit$expressions[inputs[missing]]
+    if (all(is.symbols(exprs)))
+      outputs[missing] <- as.character(exprs)
     else
-      stop("outputs can only be AUTO when inputs are all attributes.")
-  else
-    outputs <- convert.atts(outputs)
-  if (length(outputs) != length(inputs))
-    stop("There must be exactly one output specified per input.")
-
-  agg <- Aggregate(data, GLA(Min), inputs, outputs)
-  agg
+      stop("no name given for complex inputs:",
+           paste("\n\t", lapply(exprs, deparse), collapse = ""))
+  } else {
+    if (!is.null(names(inputs)))
+      warning("both outputs and named inputs given. outputs used.")
+    outputs <- convert.atts(substitute(outputs))
+  }
+  Aggregate(data, GLA(Min), inputs, outputs)
 }
 
 #' @rdname univariate
 Max <- function(data, inputs = AUTO, outputs = AUTO) {
-  inputs <- substitute(inputs)
-  check.exprs(inputs)
-  if (is.auto(inputs))
+  if (missing(inputs)) {
     inputs <- convert.schema(names(data$schema))
-  inputs <- convert.exprs(inputs, data)
+  } else {
+    inputs <- substitute(inputs)
+    check.exprs(inputs)
+    inputs <- convert.exprs(inputs)
+  }
 
-  outputs <- substitute(outputs)
-  check.atts(outputs)
-  if (is.auto(outputs))
-    if (all(is.symbols(grokit$expressions[inputs])))
-      outputs <- unlist(lapply(grokit$expressions[inputs], as.character))
+  if (missing(outputs)) {
+    outputs <- convert.names(inputs)
+    missing <- which(outputs == "")
+    exprs <- grokit$expressions[inputs[missing]]
+    if (all(is.symbols(exprs)))
+      outputs[missing] <- as.character(exprs)
     else
-      stop("outputs can only be AUTO when inputs are all attributes.")
-  else
-    outputs <- convert.atts(outputs)
-  if (length(outputs) != length(inputs))
-    stop("There must be exactly one output specified per input.")
-
-  agg <- Aggregate(data, GLA(Max), inputs, outputs)
-  agg
+      stop("no name given for complex inputs:",
+           paste("\n\t", lapply(exprs, deparse), collapse = ""))
+  } else {
+    if (!is.null(names(inputs)))
+      warning("both outputs and named inputs given. outputs used.")
+    outputs <- convert.atts(substitute(outputs))
+  }
+  Aggregate(data, GLA(Max), inputs, outputs)
 }
 
 #' @rdname univariate

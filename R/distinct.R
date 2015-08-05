@@ -22,25 +22,39 @@
 #'   for the inputs are given, an error is thrown.
 #' @return A \code{\link{waypoint}}.
 #' @author Jon Claus, <jonterainsights@@gmail.com>, Tera Insights, LLC.
-
-Distinct <- function(data, inputs = AUTO, outputs = AUTO) {
-  inputs <- substitute(inputs)
-  check.exprs(inputs)
-  if (is.auto(inputs))
+Distinct <- function(data, inputs, outputs) {
+  if (missing(inputs)) {
     inputs <- convert.schema(names(data$schema))
-  inputs <- convert.exprs(inputs, data)
+  } else {
+    is.input <- tryCatch(is.inputs(inputs), error = identity)
+    if (inherits(is.input, "error"))
+      is.input <- FALSE
+    if (!is.input) {
+      inputs <- substitute(inputs)
+      check.exprs(inputs)
+      inputs <- convert.exprs(inputs)
+    } else {
+      inputs <- convert.inputs(inputs)
+    }
+  }
 
-  outputs <- substitute(outputs)
-  check.atts(outputs)
-  if (is.auto(outputs))
-    if (all(is.symbols(grokit$expressions[inputs])))
-      outputs <- unlist(lapply(grokit$expressions[inputs], as.character))
+  if (missing(outputs)) {
+    outputs <- convert.names(inputs)
+    missing <- which(outputs == "")
+    exprs <- grokit$expressions[inputs[missing]]
+    if (all(is.symbols(exprs)))
+      outputs[missing] <- as.character(exprs)
     else
-      stop("outputs can only be AUTO when inputs are all attributes.")
-  else
-    outputs <- convert.atts(outputs)
-  if (length(outputs) != length(inputs))
-    stop("There must be exactly one output specified per input.")
+      stop("no name given for complex inputs:",
+           paste("\n\t", lapply(exprs, deparse), collapse = ""))
+  } else {
+    if (!is.null(names(inputs)))
+      warning("both outputs and named inputs given. outputs used.")
+    outputs <- convert.atts(substitute(outputs))
+  }
+
+  assert(length(outputs) == length(inputs),
+         "There must be exactly one output specified per input.")
 
   Aggregate(data, GLA(Distinct), inputs, outputs)
 }

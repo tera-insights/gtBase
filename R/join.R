@@ -1,8 +1,8 @@
 Join <- function(x, xAtts, y, yAtts) {
   xAtts <- substitute(xAtts)
   yAtts <- substitute(yAtts)
-  check.atts(xAtts, FALSE)
-  check.atts(yAtts, FALSE)
+  check.atts(xAtts)
+  check.atts(yAtts)
   xAtts <- convert.atts(xAtts, x)
   yAtts <- convert.atts(yAtts, y)
   if (length(xAtts) != length(yAtts))
@@ -47,8 +47,8 @@ Join <- function(x, xAtts, y, yAtts) {
 Join2 <- function(x, xAtts, y, yAtts, yPassed) {
   xAtts <- substitute(xAtts)
   yAtts <- substitute(yAtts)
-  check.atts(xAtts, FALSE)
-  check.atts(yAtts, FALSE)
+  check.atts(xAtts)
+  check.atts(yAtts)
   xAtts <- convert.exprs(xAtts, x)
   yAtts <- convert.atts(yAtts, y)
   if (length(xAtts) != length(yAtts))
@@ -60,32 +60,39 @@ Join2 <- function(x, xAtts, y, yAtts, yPassed) {
     yPassed <- subtract(names(y$schema), c(yAtts, names(x$schema)))
   } else {
     yPassed <- substitute(yPassed)
-    check.atts(yPassed, FALSE)
+    check.atts(yPassed)
     yPassed <- convert.atts(yPassed)
   }
 
   group <- convert.schema(yAtts)
-  inner <- do.call(call, c("Gather", inputs = convert.schema(yPassed)), TRUE)
+  inner <- do.call(call, list("Gather", inputs = yPassed), TRUE)
   right <- eval(call("GroupBy", y, group, inner, use.mct = FALSE))
   Transform(x, GT(Join), xAtts, yPassed, list(right))
 }
 
-Gather <- function(data, inputs = AUTO, outputs = AUTO) {
-  inputs <- substitute(inputs)
-  check.exprs(inputs)
-  if (is.auto(inputs))
+Gather <- function(data, inputs, outputs) {
+  if (missing(inputs)) {
     inputs <- convert.schema(names(data$schema))
-  inputs <- convert.exprs(inputs)
+  } else {
+    inputs <- substitute(inputs)
+    check.exprs(inputs)
+    inputs <- convert.exprs(inputs)
+  }
 
-  outputs <- substitute(outputs)
-  check.atts(outputs)
-  if (is.auto(outputs))
-    if (all(is.symbols(grokit$expressions[inputs])))
-      outputs <- unlist(lapply(grokit$expressions[inputs], as.character))
+  if (missing(outputs)) {
+    outputs <- convert.names(inputs)
+    missing <- which(outputs == "")
+    exprs <- grokit$expressions[inputs[missing]]
+    if (all(is.symbols(exprs)))
+      outputs[missing] <- as.character(exprs)
     else
-      stop("outputs can only be AUTO when inputs are all attributes.")
-  else
-    outputs <- convert.atts(outputs)
+      stop("no name given for complex inputs:",
+           paste("\n\t", lapply(exprs, deparse), collapse = ""))
+  } else {
+    if (!is.null(names(inputs)))
+      warning("both outputs and named inputs given. outputs used.")
+    outputs <- convert.atts(substitute(outputs))
+  }
   if (length(outputs) != length(inputs))
     stop("There must be exactly one output specified per input.")
 

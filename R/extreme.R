@@ -34,8 +34,12 @@
 #'   attribute, then said attribute is used as the name. Otherwise an error is
 #'   thrown, as there is no reason to include an extra input if corresponding
 #'   output column cannot be referenced later.
+#'
+#'   If this is not given, then each attribute of \code{data} that is not used
+#'   exactly as an expression for comparison is included.
 #' @param outputs The usual way to specify the outputs. If both this and names
-#'   for the inputs are given, an error is thrown.
+#'   for the \code{inputs} are given, a warning is given and \code{outputs} is
+#'   used.
 #' @return A \code{\link{waypoint}} with the designated columns and rows.
 #' @author Jon Claus, <jonterainsights@@gmail.com>, Tera Insights, LLC.
 #' @seealso \code{\link{OrderBy}} for a similarly functioning GLA.
@@ -59,21 +63,32 @@ ExtremeTuples <- function(data, ..., inputs, outputs) {
   exprs <- grokit$expressions[constructor$inputs]
   atts <- as.character(exprs[as.logical(lapply(exprs, is.symbol))])
 
-  inputs <- substitute(inputs)
-  check.exprs(inputs)
-  if (is.auto(inputs))
+  if (missing(inputs)) {
     inputs <- convert.schema(subtract(names(data$schema), atts))
-  inputs <- convert.exprs(inputs)
+  } else {
+    if (inherits(tryCatch(is.inputs(inputs)), "error")) {
+      inputs <- substitute(inputs)
+      check.exprs(inputs)
+      inputs <- convert.exprs(inputs)
+    } else {
+      inputs <- convert.inputs(inputs)
+    }
+  }
 
-  outputs <- substitute(outputs)
-  check.atts(outputs)
-  if (is.auto(outputs))
-    if (all(as.logical(lapply(grokit$expressions[inputs], is.symbol))))
-      outputs <- unlist(lapply(grokit$expressions[unique(inputs)], as.character))
+  if (missing(outputs)) {
+    outputs <- convert.names(inputs)
+    missing <- which(outputs == "")
+    exprs <- grokit$expressions[inputs[missing]]
+    if (all(is.symbols(exprs)))
+      outputs[missing] <- as.character(exprs)
     else
-      stop("Outputs is not allowed to be AUTO if expressions are present in inputs.")
-  else
-    outputs <- convert.atts(outputs)
+      stop("no name given for complex inputs:",
+           paste("\n\t", lapply(exprs, deparse), collapse = ""))
+  } else {
+    if (!is.null(names(inputs)))
+      warning("both outputs and named inputs given. outputs used.")
+    outputs <- convert.atts(substitute(outputs))
+  }
 
   inputs <- c(constructor$inputs, inputs)
   outputs <- c(constructor$outputs, outputs)
@@ -85,7 +100,7 @@ ExtremeTuples <- function(data, ..., inputs, outputs) {
 }
 
 ExtremeTuplesMake <- function(...) {
-  args <- as.list(substitute(list(...)))[-1]
+  args <- alist(...)
   names <- names(args)
   ordering <- lapply(args, function(arg) {
     if (length(arg) != 2 || !is.symbol(arg[[1]]))
