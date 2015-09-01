@@ -135,6 +135,11 @@ set.class <- function(x, class) {
 
 as.symbols <- function(x) lapply(x, as.symbol)
 
+## This function is used to create a new alias name.
+## It generates a unique name in the form of type_#, where #
+## is an appended number. It also adds the alias to a list of
+## waypoints generated so that the order in which waypoints are
+## created is remembered.
 create.alias <- function(type = "alias") {
   if (type %in% names(grokit$alias))
     grokit$alias[[type]] <- grokit$alias[[type]] + 1
@@ -143,8 +148,6 @@ create.alias <- function(type = "alias") {
   grokit$waypoints <- c(grokit$waypoints, paste0(type, "_", grokit$alias[[type]]))
   tail(grokit$waypoints, 1)
 }
-
-subtract <- function(x, y) x[!(x %in% y)]
 
 `%nin%` <- function(x, y) !(x %in% y)
 
@@ -166,6 +169,8 @@ as.exprs <- function(expr) {
     list(expr)
 }
 
+## This function takes in a character vector of library names and
+## ensures they are loaded for any queries processed.
 grokit.library <- function(libraries)
   grokit$libraries <- c(grokit$libraries, as.character(libraries))
 
