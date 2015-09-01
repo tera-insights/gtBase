@@ -5,7 +5,11 @@ update.clustering <- function(expr, data) {
   if (length(index) == 0)
     ## Clustering attribute not visible
     return()
-  cluster <- names(data$schema)[[index]]
+  ## index[[1]] is used here because it is possible for index to be longer than
+  ## a single element. This is because the join duplicates elements in the schema,
+  ## so a single cluster attribute can match multiple elements. Ideally, cluster
+  ## should be supported that multiple names can be matched.
+  cluster <- names(data$schema)[[index[[1]]]]
 
   lower <- upper <- NULL
 
