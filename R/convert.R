@@ -35,7 +35,7 @@ convert.atts <- function(attributes, data = NULL) {
     stop("attribute specified incorrectly:", deparse(attributes))
 }
 
-convert.exprs <- function(...) UseMethod("convert.exprs")
+convert.exprs <- function(expressions, data, atts = NULL) UseMethod("convert.exprs")
 
 convert.exprs.default <- function(expressions, data, atts = NULL) {
   convert.exprs(as.list(expressions), data, atts)
