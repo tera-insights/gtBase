@@ -1,4 +1,12 @@
-## Inputs and outputs should both be un-named character vectors.
+#' Waypoint Construction
+#'
+#' These functions are responsible for constructing waypoints, the building
+#' blocks for every query.
+#'
+#' In the GrokIt system, a waypoint is the most basic level of data processing,
+#' each of which is a coupling of an operator, inputs, and outputs. Essentially,
+#' each waypoint consists of a task to perform, what to perform this task on,
+#' and what to produce.
 Aggregate <- function(data, gla, inputs, outputs, states = NULL) {
   schema <- setNames(convert.outputs(outputs), outputs)
   gla <- convert.args(gla, schema)
