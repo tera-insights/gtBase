@@ -1,14 +1,14 @@
-Segmenter <- function(data, segment = AUTO, passes = 1, num.segments = 64) {
+Segmenter <- function(data, segment, passes = 1, num.segments = 64) {
   if (!("GLA" %in% class(data)))
     stop("Segment must be placed on top of an aggregate waypoint.")
 
-  segment <- substitute(segment)
-  check.exprs(segment)
-  if (is.auto(segment))
+  if (missing(segment))
     if (length(data$inputs) == 0)
       stop("Segment cannot be AUTO as the input GLA has no inputs.")
     else
       segment <- grokit$expressions[[data$inputs[[1]]]]
+  else
+    segment <- substitute(segment)
   segment <- convert.exprs(segment)
   data$inputs <- c(segment, data$inputs)
 
