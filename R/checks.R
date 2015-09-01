@@ -16,7 +16,7 @@ check.inputs <- function(x, schema) {
   atts <- unlist(lapply(expressions, function(expression) {
     unlist(lapply(extract.symbols(expression), as.character))
   }))
-  missing <- subtract(atts, names(x$schema))
+  missing <- setdiff(atts, names(x$schema))
   if (length(missing) != 0)
     stop("the following attributes are missing:\n",
          paste0("\t", missing, collapse = "\n"))

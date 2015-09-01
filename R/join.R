@@ -24,8 +24,8 @@ Join <- function(x, xAtts, y, yAtts) {
   yNames <- y$schema[yAtts]
 
   ## Attributes passed through the join that aren't being joined on
-  xPassed <- subtract(x$schema, xNames)
-  yPassed <- subtract(y$schema, yNames)
+  xPassed <- setdiff(x$schema, xNames)
+  yPassed <- setdiff(y$schema, yNames)
 
   xInvisible <- xPassed[names(xPassed) %in% names(y$schema)]
   yInvisible <- yPassed[names(yPassed) %in% names(x$schema)]
@@ -57,7 +57,7 @@ Join2 <- function(x, xAtts, y, yAtts, yPassed) {
   check.schema(y, yAtts)
 
   if (missing(yPassed)) {
-    yPassed <- subtract(names(y$schema), c(yAtts, names(x$schema)))
+    yPassed <- setdiff(names(y$schema), c(yAtts, names(x$schema)))
   } else {
     yPassed <- substitute(yPassed)
     check.atts(yPassed)

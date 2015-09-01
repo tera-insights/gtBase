@@ -64,7 +64,7 @@ ExtremeTuples <- function(data, ..., inputs, outputs) {
   atts <- as.character(exprs[as.logical(lapply(exprs, is.symbol))])
 
   if (missing(inputs)) {
-    inputs <- convert.schema(subtract(names(data$schema), atts))
+    inputs <- convert.schema(setdiff(names(data$schema), atts))
   } else {
     if (inherits(tryCatch(is.inputs(inputs)), "error")) {
       inputs <- substitute(inputs)
@@ -100,7 +100,7 @@ ExtremeTuples <- function(data, ..., inputs, outputs) {
 }
 
 ExtremeTuplesMake <- function(...) {
-  args <- alist(...)
+  args <- as.list(substitute(list(...)))[-1]
   names <- names(args)
   ordering <- lapply(args, function(arg) {
     if (length(arg) != 2 || !is.symbol(arg[[1]]))
@@ -117,7 +117,7 @@ ExtremeTuplesMake <- function(...) {
   if (!all(directions %in% c("min", "max")))
     stop("directional specifiers must be either min or max.",
          "The following are erroneous:\n",
-         paste0("\t", subtract(directions, c("min", "max")), collapse = "\n"))
+         paste0("\t", setdiff(directions, c("min", "max")), collapse = "\n"))
 
   atts <- unlist(lapply(exprs, convert.exprs, data = x))
   directions <- as.list(directions)
