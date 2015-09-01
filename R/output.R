@@ -139,11 +139,11 @@ Store <- function(data, relation, ..., .overwrite = FALSE) {
     stop("relation attributes not found: ", paste(bad, collapse = ", "))
   if (any(bad <- atts %nin% names(data$schema)))
     stop("data attributes not found: ", paste(bad, collapse = ", "))
-  if (any(bad <- subtract(schema, names) %nin% names(data$schema)))
+  if (any(bad <- setdiff(schema, names) %nin% names(data$schema)))
     stop("relation attributes not filled: ", paste(schema[bad], collapse = ", "))
 
-  atts <- c(atts, subtract(schema, names))
-  names <- c(names, subtract(schema, names))
+  atts <- c(atts, setdiff(schema, names))
+  names <- c(names, setdiff(schema, names))
 
   waypoints <- Translate(data)
   waypoints <- waypoints[order(match(names(waypoints), grokit$waypoints))]
