@@ -93,6 +93,10 @@ run <- function(piggy, pgy, err) {
     cat(paste0(gsub("\t", "  ", piggy), "\n"))
   cat(piggy, file = pgy)
   args <- c("-e", err, "run", pgy)
+  offlineMode <- Sys.getenv("mode") == "offline"
+  if (offlineMode) {
+    args <- c("-b", args)
+  }
   code <- system2("grokit", args = args)
   if (!getOption("keep.files", TRUE))
     file.remove(pgy)
