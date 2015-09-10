@@ -39,12 +39,11 @@ convert.type.call <- function(type) {
     eval(as.call(c(substitute(TYPE), type)))
   } else {
     name <- type[[1]]
-    assert(is.identifier(name), "invalid type: ", name)
     args <- as.list(type)[-1]
     names <- names(args)
     args <- ifelse(lapply(args, is.language), lapply(args, convert.types), args)
     names(args) <- names
-    eval(as.call(c(substitute(TYPE), type[[1]], args)))
+    eval(as.call(c(substitute(TYPE), name, args)))
   }
 }
 
