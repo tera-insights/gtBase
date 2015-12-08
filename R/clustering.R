@@ -43,6 +43,9 @@ update.clustering <- function(expr, data) {
 ## bound shold be "upper" or "lower"
 do.bounding <- function(literal, attribute, bound) UseMethod("do.bounding")
 
+## Nothing is done if the clustering attribute is being compared to other attributes.
+do.bounding.name <- function(literal, attribute, bound) {}
+
 do.bounding.typeof <- function(literal, attribute, bound)
   stop("clusting attribute cannot be compared with type: ", typeof(literal))
 
