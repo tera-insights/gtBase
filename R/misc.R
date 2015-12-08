@@ -18,9 +18,9 @@ long.name <- function(expr, data) {
   if (all(is.symbols(as.list(expr))))
     if (!is.data(other <- eval(expr[[2]], .GlobalEnv)))
       stop("invalid waypoint referenced: ", deparse(expr))
-    else if ((att <- as.character(expr[[3]])) %nin% names(other$schema))
+    else if (!(att <- as.character(expr[[3]])) %in% names(other$schema))
       stop("missing attribute referenced: ", deparse(expr))
-    else if (other$schema[[att]] %nin% data$schema)
+    else if (!other$schema[[att]] %in% data$schema)
       stop("long name ", deparse(expr), " missing from current waypoint")
     else
       as.symbol(names(data$schema)[[which(other$schema[[as.character(expr[[3]])]] == data$schema)[[1]]]])
@@ -135,19 +135,31 @@ set.class <- function(x, class) {
 
 as.symbols <- function(x) lapply(x, as.symbol)
 
-## This function is used to create a new alias name.
-## It generates a unique name in the form of type_#, where #
-## is an appended number. It also adds the alias to a list of
-## waypoints generated so that the order in which waypoints are
-## created is remembered.
-create.alias <- function(type = "alias") {
-  if (type %in% names(grokit$alias))
-    grokit$alias[[type]] <- grokit$alias[[type]] + 1
+## create.name is used to generate unique names, separated by type.
+## Given a name and a type, it returns a modification of the name that is
+## different from all previously generated names for that type by appending
+## an underscore and a number.
+create.name <- function(name, type) {
+  if (!(type %in% names(grokit$names)))
+    grokit$names[[type]] <- integer()
+  if (name %in% names(grokit$names[[type]]))
+    grokit$names[[type]][[name]] <- grokit$names[[type]][[name]] + 1
   else
-    grokit$alias[[type]] <- 1
-  grokit$waypoints <- c(grokit$waypoints, paste0(type, "_", grokit$alias[[type]]))
-  tail(grokit$waypoints, 1)
+    grokit$names[[type]][[name]] <- 1
+  alias <- paste0(name, "_", grokit$names[[type]][[name]])
+  alias
 }
+
+create.alias <- function(name = "alias") {
+  alias <- create.name(name, "waypoint")
+  grokit$waypoints <- c(grokit$waypoints, alias)
+  alias
+}
+
+## Grabs the base name from a generated name by stripping off the suffix, i.e.
+## the underscore and number.
+base.name <- function(name)
+  paste(head(strsplit(name, "_")[[1]], -1), collapse = "_")
 
 `%nin%` <- function(x, y) !(x %in% y)
 
@@ -238,3 +250,16 @@ process.io <- function(i.def, o.def, names = T) {
     outputs <- convert.atts(quote(outputs))
   }
 }
+
+## Given a templated object, this function returns the string library::name,
+## where library and name are the relevant fields of the function. Note that a
+## templated function is not the same thing as a waypoint that uses one.
+get.function.name <- function(object) paste0(object$library, "::", object$name)
+
+## This function is similar to setdiff but the names of x are kept.
+subtract <- function(x, y) x[!(x %in% y)]
+
+## This function deduced the relation name. If the input evaluates to a length
+## one character vector, then that is used as the name. Otherwise, if the given
+## expression is a symbol, that symbol is treated as the relation name. If not,
+## an error is thrown. When calling this within another function,
