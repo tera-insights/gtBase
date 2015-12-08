@@ -75,20 +75,23 @@ GetResult <- function(data, type, inputs, result, limit = FALSE) {
   ## Creating piggy should not change any fields of grokit permanently
   copy <- as.environment(as.list(grokit, all.names = TRUE))
   on.exit(grokit <- as.environment(as.list(copy, all.names = TRUE)))
+
   file <- tempfile("Q")
   pgy <- paste0(file, ".pgy")
   err <- paste0(file, ".err") ## for the error
   if (missing(result))
     result <- paste0(file, ".", type)
-  waypoints <- Translate(data)
+
+  waypoints <- Translate(Process(data, list()))
   waypoints <- waypoints[order(match(names(waypoints), grokit$waypoints))]
   piggy <- paste0(Translate.ID(), Translate.Libraries(), "\n",
                   paste(c(waypoints, Translate.Print(data, inputs, type, result, limit = limit)), collapse = "\n"))
-  run(piggy, pgy, err)
+
+  RunQuery(piggy, pgy, err)
   result
 }
 
-run <- function(piggy, pgy, err) {
+RunQuery <- function(piggy, pgy, err) {
   if (getOption("show.piggy", TRUE))
     cat(paste0(gsub("\t", "  ", piggy), "\n"))
   cat(piggy, file = pgy)
@@ -111,19 +114,24 @@ run <- function(piggy, pgy, err) {
   }
 }
 
-## TODO: Add generate, expressions, and type checking with USING clause
 Store <- function(data, relation, ..., .overwrite = FALSE) {
   if (!inherits(data, "data"))
     stop("data must be a data object.")
   if (exists("grokit.jobid"))
     stop("Store is not allowed to be called from the web interface.")
-  relation <- substitute(relation)
-  if (!is.symbol(relation))
-    stop("relation should be a symbol literal naming an existing relation.")
 
-  relation <- as.character(relation)
-  catalog <- get.catalog(relation)
-  schema <- unlist(lapply(catalog$attributes, `[[`, "name"))
+  ischar <- tryCatch(is.character(relation) && length(relation) == 1,
+                     error = identity)
+  if (inherits(ischar, "error"))
+    ischar <- FALSE
+  if (!ischar)
+    relation <- as.character(substitute(relation))
+  assert(is.character(relation) && length(relation) == 1,
+         "'relation' should be a name or a length-one character vector")
+  assert(is.relation(relation),
+         "invalid relation given: ", deparse(relation))
+
+  schema <- get.attributes(relation)
 
   pgy <- tempfile("Q", fileext = ".pgy")
   overwrite <- if (.overwrite) " OVERWRITE" else ""
@@ -139,13 +147,13 @@ Store <- function(data, relation, ..., .overwrite = FALSE) {
     stop("relation attributes not found: ", paste(bad, collapse = ", "))
   if (any(bad <- atts %nin% names(data$schema)))
     stop("data attributes not found: ", paste(bad, collapse = ", "))
-  if (any(bad <- setdiff(schema, names) %nin% names(data$schema)))
+  if (any(bad <- subtract(schema, names) %nin% names(data$schema)))
     stop("relation attributes not filled: ", paste(schema[bad], collapse = ", "))
 
-  atts <- c(atts, setdiff(schema, names))
-  names <- c(names, setdiff(schema, names))
+  atts <- c(atts, subtract(schema, names))
+  names <- c(names, subtract(schema, names))
 
-  waypoints <- Translate(data)
+  waypoints <- Translate(Process(data, list()))
   waypoints <- waypoints[order(match(names(waypoints), grokit$waypoints))]
 
   store <- paste0("STORE ", data$alias,
@@ -162,6 +170,9 @@ Store <- function(data, relation, ..., .overwrite = FALSE) {
   if (getOption("show.piggy", TRUE))
     cat(gsub("\t", "  ", piggy))
   code <- system2("grokit", args = c("-w run", pgy))
-  if (code != 0)
+
+  if (code == 1)
+    stop("There is already a query in progress. Unable to run at this time.")
+  else if (code != 0)
     stop("Write not completed.")
 }
