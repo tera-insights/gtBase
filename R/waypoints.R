@@ -1,4 +1,4 @@
-#' Waypoint Construction
+ #' Waypoint Construction
 #'
 #' These functions are responsible for constructing waypoints, the building
 #' blocks for every query.
@@ -7,7 +7,8 @@
 #' each of which is a coupling of an operator, inputs, and outputs. Essentially,
 #' each waypoint consists of a task to perform, what to perform this task on,
 #' and what to produce.
-Aggregate <- function(data, gla, inputs, outputs, states = NULL) {
+Aggregate <- function(data, gla, inputs = character(), outputs = character(),
+                      states = NULL) {
   schema <- setNames(convert.outputs(outputs), outputs)
   gla <- convert.args(gla, schema)
   check.inputs(data, inputs)
@@ -20,6 +21,13 @@ Aggregate <- function(data, gla, inputs, outputs, states = NULL) {
                     schema = schema, states = states)
   class(aggregate) <- c("GLA", "data")
   aggregate
+}
+
+Cache <- function(data) {
+  alias <- create.alias(paste0("cache", "_", base.name(data$alias)))
+  cache <- list(alias = alias, data = data, schema = data$schema)
+  class(cache) <- c("Cache", class(data))
+  cache
 }
 
 Transition <- function(gist, outputs, states) {
@@ -42,7 +50,7 @@ Transform <- function(data, gt, inputs, outputs, states = NULL, overwrite = FALS
 
   if (any(bad <- outputs %in% names(data$schema)) && !overwrite)
     stop("cannot perform transform due to the following name clashes:\n",
-         paste0("\t", atts[bad], collapse = "\n"))
+         paste0(outputs[bad], collapse = ", "))
 
   outputs <- setNames(convert.outputs(outputs), outputs)
   schema <- data$schema
@@ -143,10 +151,15 @@ Filter <- function(data, gf, inputs = character(), states = NULL) {
 #' @return A \code{waypoint} object whose schema is determined by the
 #'   relation being loaded.
 Load <- function(relation) {
-  relation <- substitute(relation)
-  if (!is.symbol(relation))
-    stop("relation should be given as a symbol.")
-  relation <- as.character(relation)
+  ischar <- tryCatch(is.character(relation) && length(relation) == 1,
+                     error = identity)
+  if (inherits(ischar, "error"))
+    ischar <- FALSE
+  if (!ischar)
+    relation <- as.character(substitute(relation))
+  assert(is.character(relation) && length(relation) == 1,
+         "'relation' should be a name or a length-one character vector")
+
   catalog <- get.catalog(relation)
   alias <- create.alias(relation)
 
@@ -174,3 +187,29 @@ Load <- function(relation) {
 #' @usage Read(relation)
 Read <- Load
 
+
+#' Basic Filtering of Waypoints
+#'
+#' Filter a waypoint based on a boolean expression.
+#'
+#' \code{condition} is evaluated for each tuple in \code{data} independently.
+#' Only those tuples for which \code{condition} evaluates to TRUE are passed
+#' through the filter.
+#'
+#' @param data A \code{\link{waypoint}}.
+#' @param condition A boolean valued \code{\link{expression}}.
+#' @return A \code{\link{waypoint}} with a subset of the tuples in \code{data}.
+#' @author Jon Claus, <jonterainsights@@gmail.com>, Tera Insights, LLC.
+`[.data` <- function(data, condition) {
+  condition <- substitute(condition)
+  if (condition[[1]] == "c")
+    stop("Condition is not allowed to be a listt of expressions.")
+  check.exprs(condition)
+  condition <- convert.exprs(condition, data)
+  check.inputs(data, condition)
+  alias <- create.alias("filter")
+  schema <- data$schema
+  filter <- list(data = data, alias = alias, schema = schema, condition = condition)
+  class(filter) <- c("Filter", "data")
+  filter
+}
