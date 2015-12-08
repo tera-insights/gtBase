@@ -8,8 +8,9 @@ TemplateFunction <- function(.type, .name, ..., .infer = T) {
   assert(is.call.to(.name, "::") && all(is.symbols(as.list(.name))),
          "invalid template name: ", deparse(.name))
 
-  assert(tolower(as.character(.name[[2]])) %in% tolower(grokit$libraries),
-         "unloaded library called: ", deparse(.name))
+  lib <- as.character(.name[[2]])
+  if (!lib %in% grokit$libraries)
+    grokit$libraries <- c(grokit$libraries, lib)
 
   types <- c("GLA", "UDF", "GF", "GIST", "GT", "GI", "TYPE")
   assert(is.symbol(.type) && as.character(.type) %in% types,
