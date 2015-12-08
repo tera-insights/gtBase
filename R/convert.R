@@ -63,7 +63,7 @@ convert.exprs.list <- function(expressions, data, atts = NULL) {
   else if (length(atts) != length(expressions))
     stop("in convert.exprs, atts must be the same length as expressions.")
   grokit$expressions[atts] <- expressions
-  structure(atts, names = names(expressions))
+  setNames(atts, names(expressions))
 }
 
 convert.exprs.name <- function(expressions, data, atts = NULL) {

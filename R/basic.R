@@ -97,7 +97,7 @@ Mean <- function(data, inputs = AUTO, outputs = AUTO) {
 #' @rdname univariate
 Min <- function(data, inputs = AUTO, outputs = AUTO) {
   if (missing(inputs)) {
-    inputs <- convert.schema(setdiff(names(data$schema), atts))
+    inputs <- convert.schema(subtract(names(data$schema), atts))
   } else {
     inputs <- substitute(inputs)
     check.exprs(inputs)
