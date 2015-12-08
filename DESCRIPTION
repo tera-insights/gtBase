@@ -7,5 +7,5 @@ Author: Jon Claus, Tera Insights, LLC
 Maintainer: Jon Claus <jonterainsights@gmail.com>
 Description: R Interface for the Grokit System
 License: Propietary
-Depends: rjson
+Depends: rjson, methods
 Suggests: testthat
