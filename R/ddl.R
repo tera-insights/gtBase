@@ -1,3 +1,5 @@
+## This file stands for data definition language.
+
 #' Create and Delete Relations.
 #'
 #' Functions used to create and delete relations.
@@ -22,12 +24,18 @@
 #'   \code{\link{type}}.
 #' @return An \code{\link{invisible}} NULL value.
 #' @author Jon Claus, <jonterainsights@@gmail.com>, Tera Insights, LLC.
-Create <- function(name, ...) {
-  name <- substitute(name)
-  if (!is.symbol(name) && is.identifier(as.character(name)))
-    stop("invalid name given: ", deparse(name))
-  if (as.character(name) %in% unlist(lapply(get.schema()$catalog, `[[`, "name")))
-    stop("cannot overwrite relation: ", name)
+Create <- function(relation, ...) {
+  ischar <- tryCatch(is.character(relation) && length(relation) == 1,
+                     error = identity)
+  if (inherits(ischar, "error"))
+    ischar <- FALSE
+  if (!ischar)
+    relation <- as.character(substitute(relation))
+  assert(is.character(relation) && length(relation) == 1,
+         "'relation' should be a name or a length-one character vector")
+  assert(!is.relation(relation),
+         "cannot overwrite relation: ", relation)
+
   types <- lapply(as.list(substitute(list(...)))[-1], convert.type)
   if (length(types) == 0)
     stop("schema cannot be empty")
@@ -35,31 +43,66 @@ Create <- function(name, ...) {
   if (is.null(schema) || any(schema == ""))
     stop("missing attribute names")
 
-  piggy <- paste(paste("CREATE RELATION", name, "("),
+  piggy <- paste(Translate.Libraries(),
+                 paste("CREATE RELATION", relation, "("),
                  paste("\t", Translate.Outputs(schema), ":", lapply(types, Translate.Template), collapse = ",\n"),
                  ");", "FLUSH;", "QUIT;\n", sep = "\n")
   file <- tempfile("Q")
   pgy <- paste0(file, ".pgy")
   err <- paste0(file, ".err")
-  run(piggy, pgy, err)
+  RunQuery(piggy, pgy, err)
   ## TODO: This won't work because the schema isn't created immediately. Need to run another query first.
   grokit$schemas <- get.schema()
   invisible(NULL)
 }
 
 #' @rdname Create
-Delete <- function(name) {
-  name <- substitute(name)
-  if (!is.symbol(name) && is.identifier(as.character(name)))
-    stop("invalid name given: ", deparse(name))
-  if (!as.character(name) %in% unlist(lapply(get.schema()$catalog, `[[`, "name")))
-    stop("unavailable relation: ", name)
-  piggy <- paste0("DELETE RELATION ", name, ";FLUSH;\nQUIT;\n")
+Delete <- function(relation) {
+  ischar <- tryCatch(is.character(relation) && length(relation) == 1,
+                     error = identity)
+  if (inherits(ischar, "error"))
+    ischar <- FALSE
+  if (!ischar)
+    relation <- as.character(substitute(relation))
+  assert(is.character(relation) && length(relation) == 1,
+         "'relation' should be a name or a length-one character vector")
+  assert(is.relation(relation),
+         "invalid relation given: ", deparse(relation))
+
+  piggy <- paste0("DELETE RELATION ", relation, ";\nFLUSH;\nQUIT;\n")
   file <- tempfile("Q")
   pgy <- paste0(file, ".pgy")
   err <- paste0(file, ".err")
-  run(piggy, pgy, err)
+  RunQuery(piggy, pgy, err)
   ## TODO: This won't work because the schema isn't created immediately. Need to run another query first.
+  grokit$schemas <- get.schema()
+  invisible(NULL)
+}
+
+#' @rdname Create
+Cluster <- function(relation, attribute) {
+  ischar <- tryCatch(is.character(relation) && length(relation) == 1,
+                     error = identity)
+  if (inherits(ischar, "error"))
+    ischar <- FALSE
+  if (!ischar)
+    relation <- as.character(substitute(relation))
+  assert(is.character(relation) && length(relation) == 1,
+         "'relation' should be a name or a length-one character vector")
+  assert(is.relation(relation),
+         "invalid relation given: ", deparse(relation))
+
+  attribute <- substitute(attribute)
+  assert(is.symbol(attribute) && is.identifier(as.character(attribute)),
+         "invalid attribute given: ", deparse(attribute))
+  assert(as.character(attribute) %in% get.attributes(relation),
+         "unavailable attribute: ", attribute)
+
+  piggy <- paste0("CLUSTER ", relation, " BY ", as.character(attribute), ";\n")
+  file <- tempfile("Q")
+  pgy <- paste0(file, ".pgy")
+  err <- paste0(file, ".err")
+  RunQuery(piggy, pgy, err)
   grokit$schemas <- get.schema()
   invisible(NULL)
 }
