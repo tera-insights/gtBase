@@ -47,7 +47,7 @@ Translate.Join <- function(join) {
 }
 
 Translate.GLA <- function(gla) {
-  c(sapply(gla$states, Translate), Translate(gla$data),
+  c(unlist(lapply(gla$states, Translate)), Translate(gla$data),
     setNames(
         paste0(gla$alias, " =",
                "\n", Translate(gla$gla),
