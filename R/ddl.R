@@ -106,3 +106,25 @@ Cluster <- function(relation, attribute) {
   grokit$schemas <- get.schema()
   invisible(NULL)
 }
+
+Clear <- function(relation) {
+  ischar <- tryCatch(is.character(relation) && length(relation) == 1,
+                     error = identity)
+  if (inherits(ischar, "error"))
+    ischar <- FALSE
+  if (!ischar)
+    relation <- as.character(substitute(relation))
+  assert(is.character(relation) && length(relation) == 1,
+         "'relation' should be a name or a length-one character vector")
+  assert(is.relation(relation),
+         "invalid relation given: ", deparse(relation))
+
+  piggy <- paste0("DELETE CONTENT ", relation, ";\nFLUSH;\nQUIT;\n")
+  file <- tempfile("Q")
+  pgy <- paste0(file, ".pgy")
+  err <- paste0(file, ".err")
+  RunQuery(piggy, pgy, err)
+  ## TODO: This won't work because the schema isn't created immediately. Need to run another query first.
+  grokit$schemas <- get.schema()
+  invisible(NULL)
+}
