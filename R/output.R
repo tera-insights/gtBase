@@ -108,6 +108,11 @@ run <- function(piggy, pgy, err) {
      } else {
       stop("Internal: ", fromJSON(file = err)$message)
     }
+  } else {
+    ## Query completed. Update schema information. Normally this would only be
+    ## needed when running a DDL query, but because those are not run until after
+    ## a query with actual data flow, we update the meta information every time.
+    grokit$schemas <- get.schema()
   }
 }
 
