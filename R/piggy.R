@@ -166,7 +166,7 @@ Translate.Expr.default <- function(expr, data) expr
 Translate.Expr.if <- function(expr, data) {
   if (length(expr) != 4)
     stop("inline if (ternary operator) must be given an else branch.")
-  quotate(paste(Translate.Expr(expr[[2]], data),
+  quotate(paste(     Translate.Expr(expr[[2]], data),
                 "?", Translate.Expr(expr[[3]], data),
                 ":", Translate.Expr(expr[[4]], data)),
           "(")

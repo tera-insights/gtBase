@@ -96,6 +96,10 @@ RunQuery <- function(piggy, pgy, err) {
     cat(paste0(gsub("\t", "  ", piggy), "\n"))
   cat(piggy, file = pgy)
   args <- c("-e", err, "run", pgy)
+  offlineMode <- Sys.getenv("mode") == "offline"
+  if (offlineMode) {
+    args <- c("-b", args)
+  }
   code <- system2("grokit", args = args)
   if (!getOption("keep.files", TRUE))
     file.remove(pgy)
@@ -111,6 +115,11 @@ RunQuery <- function(piggy, pgy, err) {
      } else {
       stop("Internal: ", fromJSON(file = err)$message)
     }
+  } else {
+    ## Query completed. Update schema information. Normally this would only be
+    ## needed when running a DDL query, but because those are not run until after
+    ## a query with actual data flow, we update the meta information every time.
+    grokit$schemas <- get.schema()
   }
 }
 

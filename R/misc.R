@@ -114,11 +114,17 @@ name.exprs <- function(expressions, data) {
 }
 
 get.schema <- function() {
-  temp <- tempfile("schema", fileext = ".txt")
-  system2("grokit-cli", args = c("schema", temp, mget("grokit.jobid", envir = .GlobalEnv, ifnotfound = "")))
-  schema <- fromJSON(file = temp)
-  file.remove(temp)
-  schema
+  offlineMode <- Sys.getenv("mode") == "offline"
+  if (offlineMode) {
+    schema <- fromJSON(file = "~/schema.json")
+    schema
+  } else {
+    temp <- tempfile("schema", fileext = ".txt")
+    system2("grokit-cli", args = c("schema", temp, mget("grokit.jobid", envir = .GlobalEnv, ifnotfound = "")))
+    schema <- fromJSON(file = temp)
+    file.remove(temp)
+    schema
+  }
 }
 
 get.exprs <- function(...) grokit$expressions[c(...)]
