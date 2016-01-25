@@ -52,7 +52,6 @@ Count <- function(data, outputs = count) {
 #' data <- Read(lineitem100g)
 #' agg <- CountDistinct(data, inputs = l_partkey)
 #' result <- as.data.frame(agg)
-#'
 CountDistinct <- function(data, inputs, outputs = count) {
   if (missing(inputs)) {
     inputs <- convert.schema(names(data$schema))
