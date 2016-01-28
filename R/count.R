@@ -1,4 +1,4 @@
-#' Number of Rows in a Waypoint.
+#' Count Rows
 #'
 #' Counts the total number of tuples in the given waypoint.
 #'
