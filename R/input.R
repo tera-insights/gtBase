@@ -18,7 +18,7 @@
 #' the third column, and both for the fourth column, \code{c(a = b, c, d=, )}
 #' would be appropriate. In this example, the first column has name \dQuote{a}
 #' and type \code{b}. The second column is given a generated name, such as
-#' \dQuote{V1}. Third column has its type deduced based on the file. Both of
+#' \dQuote{V2}. Third column has its type deduced based on the file. Both of
 #' these occur for the fourth column.
 #'
 #' In the case that you want a single column without specifying either the name
@@ -54,8 +54,8 @@
 #'   Otherwise, the attributes are specified as the arguments of the call to
 #'   \code{\link{c}}. Each argument should be of the form \code{name = type},
 #'   where \code{name} is the desired name for the corresponding column and
-#'   \code{type} is a \code{\link[=types]{literal type object}}. The columns
-#'   are specified in order and skipping is allowed. See \sQuote{details} for
+#'   \code{type} is a \code{\link[=types]{literal type object}}. The columns are
+#'   specified in order and skipping is disallowed. See \sQuote{details} for
 #'   more information.
 #'
 #'   However, in the case that the value of \code{attributes} is a length-one
@@ -64,7 +64,10 @@
 #'   is a valid relation.
 #'
 #'   In the case that the file has more columns than are specified here, extra
-#'   columns at the end are simply skipped.
+#'   columns at the end are simply omitted.
+#'
+#'   This argument can be omitted, which is equivalent to reading in every
+#'   column and inferring the name and type information.
 #' @param header Whether the files contain the name of the columns on the first
 #'   line. If so, only the header in the first file is used.
 #' @param skip The number of lines to skip at the beginning of each document.
@@ -81,7 +84,7 @@
 #' @param quote The character used to quote strings, given as a length-one
 #'   character vector whose single element should be a single ASCII character.
 #'   This is the character that is used to quote strings. Having different
-#'   characters to quote a string, such as "(" and ")" is not supported.
+#'   characters to begin and end a string, such as "(" and ")" is not supported.
 #' @param escape The character used to escape the quote character, given as a
 #'   length-one character vector whose single element should be a single ASCII
 #'   character.
@@ -104,7 +107,7 @@
 #'   OR
 #'
 #'   a length-one logical. \code{TRUE} is the same as using the string
-#'   \code{"NULL"} and \code{FALSE} denotes that no attributes are nullable.
+#'   \code{"NULL"} and \code{FALSE} denotes that the attribute is not nullable.
 #'
 #'   \code{nullable} can either be given as one of the two above formats, in
 #'   which case the same value is used for every attribute, or as a list in
@@ -138,10 +141,18 @@
 #'   Furtheremore, arguments may be changed to fully mimic the behavior of the
 #'   Grokit CSV Reader, such as to accomodate \code{simple = TRUE}.
 #' @param chunk The chunk size, to be passed to \code{\link{Input}}.
+#' @param check Should R read the file. If this is false, then no type or name
+#'   inference is allowed. This is required for reading named pipes which can
+#'   only be read once.
+#'
+#'   If the file is not read, then the column information cannot be inferred and
+#'   must be given for each column.
+#' @return A \code{\link{waypoint}} with the designated columns and rows.
+#' @author Jon Claus, <jonterainsights@@gmail.com>, Tera Insights, LLC.
 ReadCSV <- function(files, attributes, header = FALSE, skip = 0, nrows = -1,
                     sep = ",", simple = FALSE, quote = '"', escape = "\\",
                     trim.cr = FALSE, nullable = FALSE, MoreArgs = list(),
-                    chunk = NULL) {
+                    chunk = NULL, check = TRUE) {
   ## Various checks, warning, and processing for each argument.
   assert(is.character(files) && length(files) > 0,
          "files should be a character vector specifying the file path(s).")
@@ -183,40 +194,44 @@ ReadCSV <- function(files, attributes, header = FALSE, skip = 0, nrows = -1,
     quote <- escape <- NULL
   }
 
-  ## The text is manually read in. Pre-processing is required to handle special escape
-  ## characters, as scan only supports back-slash as the escape character.
-  text <- readLines(files[[1]], header + skip + 1)
-  line <- tail(text, 1)
+  if (check) {
+    ## The text is manually read in. Pre-processing is required to handle special
+    ## escape characters, as scan only supports back-slash as the escape character.
+    text <- readLines(files[[1]], header + skip + 1)
+    line <- tail(text, 1)
 
-  if (!simple && escape != "\\") {
-    line <- gsub("\\", "\\\\", line)
-    line <- gsub(escape, "\\", line)
+    if (!simple && escape != "\\") {
+      line <- gsub("\\", "\\\\", line)
+      line <- gsub(escape, "\\", line)
+    }
+
+    ## Processing of arguments to read.table
+    assert(is.list(MoreArgs) && is.named(MoreArgs),
+           "MoreArgs must be a list with every element named.")
+
+    inner.args <- names(formals(read.table))
+    these.args <- names(formals(sys.function()))
+    given.args <- names(MoreArgs)
+
+    allowed <- subtract(inner.args, c(these.args, "file", "text"))
+    illegal <- subtract(given.args, allowed)
+    present <- intersect(allowed, given.args)
+
+    if (length(illegal) > 0)
+      warning("illegal arguments to read.table: ", paste(illegal, collapse = ", "))
+
+    ## Args is the shared arguments between this function and read.table.
+    Args <- mget(intersect(inner.args, these.args), sys.frame(sys.nframe()))
+    MoreArgs <- c(MoreArgs[present], Args)
+    MoreArgs$text <- paste0(c(text[as.integer(header)], line), "\n", collapse = "")
+    MoreArgs$skip <- 0
+    MoreArgs$nrows <- 1
+
+    ## The names and types are gathered from the sample.
+    sample <- as.list(eval(as.call(c(quote(read.table), MoreArgs))))
+  } else {
+    sample <- NULL
   }
-
-  ## Processing of arguments to read.table
-  assert(is.list(MoreArgs) && is.named(MoreArgs),
-         "MoreArgs must be a list with every element named.")
-
-  inner.args <- names(formals(read.table))
-  these.args <- names(formals(sys.function()))
-  given.args <- names(MoreArgs)
-
-  allowed <- setdiff(inner.args, c(these.args, "file", "text"))
-  illegal <- setdiff(given.args, allowed)
-  present <- intersect(allowed, given.args)
-
-  if (length(illegal) > 0)
-    warning("illegal arguments to read.table: ", paste(illegal, collapse = ", "))
-
-  ## Args is the shared arguments between this function and read.table.
-  Args <- mget(intersect(inner.args, these.args), sys.frame(sys.nframe()))
-  MoreArgs <- c(MoreArgs[present], Args)
-  MoreArgs$text <- paste0(c(text[as.integer(header)], line), "\n", collapse = "")
-  MoreArgs$skip <- 0
-  MoreArgs$nrows <- 1
-
-  ## The names and types are gathered from the sample.
-  sample <- as.list(eval(as.call(c(quote(read.table), MoreArgs))))
 
   ## Processing of attributes. The isTRUE implicitly ensures that length = 1.
   ## First the value is checked for validity.
@@ -227,7 +242,13 @@ ReadCSV <- function(files, attributes, header = FALSE, skip = 0, nrows = -1,
 
   ## If the value is not a relation name:
   if (!is.relation) {
-    attributes <- substitute(attributes)
+    if (missing(attributes))
+      if (check)
+        attributes <- as.call(c(substitute(c), rep(list(substitute()), length(sample))))
+      else
+        stop("attributes must be given if the file is not checked.")
+    else
+      attributes <- substitute(attributes)
 
     ## A quoted name is simply converted to a character.
     if (is.symbol(attributes)) {
@@ -246,17 +267,26 @@ ReadCSV <- function(files, attributes, header = FALSE, skip = 0, nrows = -1,
         attributes <- as.list(attributes)[-1]
 
       ## Checking if there are enough columns in the csv.
-      assert(length(attributes) <= length(sample),
-             "more attributes specified than are present in given csv file.")
+      if (check) {
+        assert(length(attributes) <= length(sample),
+               "more attributes specified than are present in given csv file.")
 
-      ## Any given names are inserted into the previously constructed col.names
-      if (!is.null(names(attributes)))
-        col.names <- ifelse(names(attributes) == "", names(sample), names(attributes))
-      else
-        col.names <- head(names(sample), length(attributes))
+        ## Any given names are inserted into the previously constructed col.names
+        if (!is.null(names(attributes)))
+          col.names <- ifelse(names(attributes) == "", names(sample), names(attributes))
+        else
+          col.names <- head(names(sample), length(attributes))
 
-      ## Column types are inferred from sample as necessary and then converted.
-      col.types <- ifelse(attributes == quote(expr = ), sample, attributes)
+        ## Column types are inferred from sample as necessary and then converted.
+        ## substitute() is the empty symbol, meaning a missing attribute type.
+        col.types <- ifelse(attributes == substitute(), sample, attributes)
+      } else {
+        ## No inference can be done as a sample was not read.
+        assert(all(attributes != substitute() & convert.names(attributes) != ""),
+               "attributes must be completely specified if 'check' is FALSE")
+        col.types <- attributes
+        col.names <- names(attributes)
+      }
       col.types <- lapply(col.types, convert.type)
       attributes <- setNames(col.types, col.names)
     }
@@ -265,8 +295,9 @@ ReadCSV <- function(files, attributes, header = FALSE, skip = 0, nrows = -1,
   if (is.character(attributes)) {
     assert(isTRUE(is.relation(attributes)), "attributes does not name a relation.")
     col.names <- get.attributes(attributes)
-    assert(length(col.names) <= length(sample),
-           "more columns in ", attributes, " than are available in csv file given.")
+    if (check)
+      assert(length(col.names) <= length(sample),
+             "more columns in ", attributes, " than are available in csv file given.")
   }
 
   ## Checking and processing of nullable.

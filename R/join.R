@@ -24,14 +24,14 @@ Join <- function(x, xAtts, y, yAtts) {
   yNames <- y$schema[yAtts]
 
   ## Attributes passed through the join that aren't being joined on
-  xPassed <- setdiff(x$schema, xNames)
-  yPassed <- setdiff(y$schema, yNames)
+  xPassed <- subtract(x$schema, xNames)
+  yPassed <- subtract(y$schema, yNames)
 
   xInvisible <- xPassed[names(xPassed) %in% names(y$schema)]
   yInvisible <- yPassed[names(yPassed) %in% names(x$schema)]
 
-  xVisible <- xPassed[names(xPassed) %nin% names(y$schema)]
-  yVisible <- yPassed[names(yPassed) %nin% names(x$schema)]
+  xVisible <- xPassed[!names(xPassed) %in% names(y$schema)]
+  yVisible <- yPassed[!names(yPassed) %in% names(x$schema)]
 
   invisible <- c(xClashed, xInvisible, yClashed, yInvisible)
   visible <- c(xJoinPassed, xVisible, yJoinPassed, yVisible)
@@ -44,30 +44,25 @@ Join <- function(x, xAtts, y, yAtts) {
   join
 }
 
-Join2 <- function(x, xAtts, y, yAtts, yPassed) {
-  xAtts <- substitute(xAtts)
-  yAtts <- substitute(yAtts)
-  check.atts(xAtts)
-  check.atts(yAtts)
-  xAtts <- convert.exprs(xAtts, x)
-  yAtts <- convert.atts(yAtts, y)
-  if (length(xAtts) != length(yAtts))
-    stop("xAtts and yAtts must specify the same number of attributes.")
-  check.inputs(x, xAtts)
-  check.schema(y, yAtts)
+JoinSafe <- function(x, xJoin, y, yJoin, yPass = c()) {
+  xJoin <- convert.exprs(substitute(xJoin))
+  yJoin <- convert.exprs(substitute(yJoin))
+  yPass <- convert.exprs(substitute(yPass))
 
-  if (missing(yPassed)) {
-    yPassed <- setdiff(names(y$schema), c(yAtts, names(x$schema)))
-  } else {
-    yPassed <- substitute(yPassed)
-    check.atts(yPassed)
-    yPassed <- convert.atts(yPassed)
-  }
+  outputs <- convert.names(yPass)
+  missing <- which(outputs == "")
+  exprs <- grokit$expressions[yPass[missing]]
+  if (all(is.symbols(exprs)))
+    outputs[missing] <- as.character(exprs)
+  else
+    stop("no name given for complex inputs:",
+         paste("\n\t", lapply(exprs, deparse), collapse = ""))
 
-  group <- convert.schema(yAtts)
-  inner <- do.call(call, list("Gather", inputs = yPassed), TRUE)
-  right <- eval(call("GroupBy", y, group, inner, use.mct = FALSE))
-  Transform(x, GT(Join), xAtts, yPassed, list(right))
+  split <- length(yJoin)  ## The template argument for the Hash
+  gla <- GLA(Multi_Hash, split = split)
+  right <- Aggregate(y, gla, c(yJoin, yPass), character())
+
+  Transform(x, GT(Join), xJoin, outputs, list(right))
 }
 
 Gather <- function(data, inputs, outputs) {

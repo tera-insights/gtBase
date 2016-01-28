@@ -47,6 +47,8 @@ MultiplexerItem <- function(agg, value, data) {
     agg[["outputs"]] <- as.symbol(value)
   grokit.copy <- as.list(grokit)[c("alias", "outputs")]
   agg <- eval(agg)
+  ## This replaces grokit with the previously made copy. This is done to avoid
+  ## generating unique names that aren't needed for this waypoint.
   mapply(assign, names(grokit.copy), grokit.copy, MoreArgs = list(envir = grokit))
   list(inputs = as.symbols(agg$inputs),
        outputs = if (is.null(names(agg$schema))) character() else add.class(names(agg$schema), "mapping"),

@@ -1,3 +1,8 @@
+Translate.Cache <- function(data) {
+  piggy <- paste0(data$alias, " = CACHE ", data$data$alias, ";\n")
+  c(Translate(data$data), setNames(piggy, data$alias))
+}
+
 Translate.Load <- function(data) {
   loading <- paste("LOAD", data$relation, "AS", data$alias)
   if (!is.null(data$cluster)) {

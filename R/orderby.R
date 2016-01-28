@@ -53,7 +53,7 @@ OrderBy <- function(data, ..., inputs, outputs) {
   atts <- as.character(exprs[is.symbols(exprs)])
 
   if (missing(inputs)) {
-    inputs <- convert.schema(setdiff(names(data$schema), atts))
+    inputs <- convert.schema(subtract(names(data$schema), atts))
   } else {
     inputs <- substitute(inputs)
     check.exprs(inputs)
@@ -103,7 +103,7 @@ OrderByMake <- function(..., limit = 0, rank = NULL, data) {
   if (!all(directions %in% c("asc", "dsc")))
     stop("Directional specifiers must be either asc or dsc.",
          "The following are erroneous:\n",
-         paste0("\t", setdiff(directions, c("asc", "dsc")), collapse = "\n"))
+         paste0("\t", subtract(directions, c("asc", "dsc")), collapse = "\n"))
 
   atts <- unlist(lapply(exprs, convert.exprs, data = data))
   directions <- as.list(directions)

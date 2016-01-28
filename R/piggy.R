@@ -179,7 +179,7 @@ Translate.Expr.Method <- function(expr, data) {
 }
 
 Translate.Expr.name <- function(expr, data) {
-  if (as.character(expr) %nin% names(data$schema))
+  if (!as.character(expr) %in% names(data$schema))
     stop(as.character(expr), " is not an attribute of ", data$alias)
 
   att <- data$schema[[as.character(expr)]]

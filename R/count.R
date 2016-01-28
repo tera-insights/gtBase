@@ -1,6 +1,6 @@
-#' Number of Rows in a Waypoint.
+#' Count Rows
 #'
-#' Counts the total number of tuples in the given waypoints.
+#' Counts the total number of tuples in the given waypoint.
 #'
 #' @param data A \code{\link{waypoint}} object.
 #' @param outputs The column name of the result.
@@ -52,7 +52,6 @@ Count <- function(data, outputs = count) {
 #' data <- Read(lineitem100g)
 #' agg <- CountDistinct(data, inputs = l_partkey)
 #' result <- as.data.frame(agg)
-#'
 CountDistinct <- function(data, inputs, outputs = count) {
   if (missing(inputs)) {
     inputs <- convert.schema(names(data$schema))
@@ -68,6 +67,5 @@ CountDistinct <- function(data, inputs, outputs = count) {
   if (length(outputs) != 1)
     stop("There must be exactly one output specified.")
 
-  agg <- Aggregate(data, GLA(CountDistinct), inputs, outputs)
-  agg
+  Aggregate(data, GLA(CountDistinct), inputs, outputs)
 }
