@@ -47,26 +47,18 @@ convert.type.call <- function(type) {
   }
 }
 
-convert.type.factor <- function(type)
-  TYPE(string)
-
-convert.type.integer <- function(type)
-  TYPE(int)
-
-convert.type.logical <- function(type)
-  TYPE(bool)
-
 convert.type.name <- function(type)
   eval(call("TYPE", type))
 
-convert.type.numeric <- function(type)
-  TYPE(double)
+## Individual cases for value-to-type lookup.
+convert.type.factor <- function(type) TYPE(string)
+convert.type.integer <- function(type) TYPE(int)
+convert.type.logical <- function(type) TYPE(bool)
+convert.type.numeric <- function(type) TYPE(double)
+convert.type.character <- function(type) TYPE(string)
+convert.type.Date <- function(type) TYPE(date)
 
-convert.type.character <- function(type)
-  TYPE(string)
-
-convert.type.Date <- function(type)
-  TYPE(datetime)
+## Frontend interface for converting types.
 
 convert.types <- function(types) UseMethod("convert.types")
 
