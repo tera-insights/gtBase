@@ -66,6 +66,9 @@ convert.type.numeric <- function(type)
 convert.type.character <- function(type)
   TYPE(string)
 
+convert.type.Date <- function(type)
+  TYPE(datetime)
+
 convert.types <- function(types) UseMethod("convert.types")
 
 convert.types.default <- function(types)
