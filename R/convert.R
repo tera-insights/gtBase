@@ -21,19 +21,6 @@ convert.args.Template <- function(template, renaming) {
   template
 }
 
-convert.atts <- function(attributes, data = NULL) {
-  if (is.call.to(attributes, "c"))
-    unlist(lapply(as.list(attributes)[-1], convert.atts, data = data))
-  else if (is.call.to(attributes, "@"))
-    if (is.null(data))
-      stop("attribute reference used incorrectly: ", deparse(attributes))
-    else
-      as.character(long.name(attributes, data))
-  else if (is.symbol(attributes))
-    as.character(attributes)
-  else
-    stop("attribute specified incorrectly:", deparse(attributes))
-}
 
 convert.exprs <- function(expressions, data, atts = NULL) UseMethod("convert.exprs")
 
