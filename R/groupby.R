@@ -39,6 +39,7 @@
 #' @param states Additional states to pass through.
 #' @return A \code{\link{waypoint}}.
 #' @author Jon Claus, <jonterainsights@@gmail.com>, Tera Insights, LLC.
+## TODO: Change this to be based around replicate's functionality.
 GroupBy <- function(data, group, ..., fragment.size = 2000000, init.size = 1024,
                     use.mct = TRUE, debug = 0, states = list()) {
   group <- substitute(group)
