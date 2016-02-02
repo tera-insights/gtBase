@@ -1,3 +1,36 @@
+#' Convert syntax.
+#'
+#' Converts R syntax into objects usable by GrokIt.
+#'
+#' This function is used as a master function to convert abstract user syntax
+#' into the necessary R objects used by various functions in RGrokIt. This is
+#' used throughout the system to transform expressions that are syntactically
+#' correct but not able to be evaluated. Usually this is done to provide syntax
+#' sugars to the front-end users, such as allowing them to specify inputs to
+#' waypoints as R expressions, rather than quoted strings.
+#'
+#' This is done in the following manner:
+#' \enumerate{
+#' \item \code{syntax} is converted to an \link{expression} using
+#' \code{\link{as.expression}} unless \code{syntax} is given as a character,
+#' in which case \code{\link{parse}} is used.
+#' \item The expression is then evaluated in the provided environment. If the
+#' result is an object with the correct class, then that value is returned.
+#' Otherwise \code{convert.[class]} is called, given an expression, the value,
+#' and \code{envir}. The expression is the result of substitute \code{syntax}
+#' in \code{envir}. The value is result of the evaluation, unless an error
+#' was thrown during evaluation, in which case \code{NULL} is used. The
+#' \code{\dots} arguments are also passed through after those three arguments.
+## TODO: Scrap all of this. Use ~ formula operator. To substitute values into a
+## formula, just use do.call("substitute", list(f, env)) where env is a list/env
+## mapping of symbol names to symbols or values.
+convert <- function(syntax, class, envir) {
+  if (is.character(syntax))
+    syntax <- parse(text = syntax)
+  else
+    syntax <- as.expression(syntax)
+}
+
 ## convert.args is used to rename template args that make use of inputs names to include the long names.
 convert.args <- function(arg, renaming) UseMethod("convert.args")
 
