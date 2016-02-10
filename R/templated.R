@@ -16,7 +16,9 @@ TemplateFunction <- function(.type, .name, ..., .infer = T) {
   assert(is.symbol(.type) && as.character(.type) %in% types,
          "invalid template type: ", deparse(.type))
 
-  ## inferring argument names
+  ## Inferring argument names. If an argument name is not specified but the
+  ## argument was given as a symbol in the call, that symbol is used instead.
+  ## TODO: Possibly adapt the data.frame function's functionality for this.
   if (.infer) {
     keys <- names(args)
     exprs <- as.list(substitute(list(...)))[-1]
@@ -25,6 +27,16 @@ TemplateFunction <- function(.type, .name, ..., .infer = T) {
              ifelse(is.symbols(exprs), as.character(exprs), ""),
              keys)
   }
+
+  ## A value of NA for a template argument is used to specify that that argument
+  ## should be omitted so that the default behavior in the PHP function is used.
+  ## NULL values are supported and not modified here.
+
+  ## TODO:
+  ## Currently, no differentiation is made between values of NA and NaN because
+  ## NaNs are not supported by Piggy. If support is added in the future, this
+  ## function must have functionality added for it.
+  args <- args[!is.na(args)]
 
   template <- list(type = .type, library = .name[[2]], name = .name[[3]], args = args)
   class(template) <- c("Template")
