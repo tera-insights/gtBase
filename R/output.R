@@ -16,6 +16,9 @@ View.data <- function(data, ...) {
   quit(save = "no")
 }
 
+## This does not attach the working directory to the file name if it is given as
+## a relative path. This is so that it will be placed in a fixed directory, as
+## determined by the GrokIt installation.
 WriteCSV <- function(data, file, ...) {
   expressions <- as.list(substitute(list(...)))[-1]
   atts <- name.exprs(expressions, data)
