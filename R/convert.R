@@ -1,109 +1,61 @@
-#' Convert syntax.
-#'
-#' Converts R syntax into objects usable by GrokIt.
-#'
-#' This function is used as a master function to convert abstract user syntax
-#' into the necessary R objects used by various functions in RGrokIt. This is
-#' used throughout the system to transform expressions that are syntactically
-#' correct but not able to be evaluated. Usually this is done to provide syntax
-#' sugars to the front-end users, such as allowing them to specify inputs to
-#' waypoints as R expressions, rather than quoted strings.
-#'
-#' This is done in the following manner:
-#' \enumerate{
-#' \item \code{syntax} is converted to an \link{expression} using
-#' \code{\link{as.expression}} unless \code{syntax} is given as a character,
-#' in which case \code{\link{parse}} is used.
-#' \item The expression is then evaluated in the provided environment. If the
-#' result is an object with the correct class, then that value is returned.
-#' Otherwise \code{convert.[class]} is called, given an expression, the value,
-#' and \code{envir}. The expression is the result of substitute \code{syntax}
-#' in \code{envir}. The value is result of the evaluation, unless an error
-#' was thrown during evaluation, in which case \code{NULL} is used. The
-#' \code{\dots} arguments are also passed through after those three arguments.
-## TODO: Scrap all of this. Use ~ formula operator. To substitute values into a
-## formula, just use do.call("substitute", list(f, env)) where env is a list/env
-## mapping of symbol names to symbols or values.
-convert <- function(syntax, class, envir) {
-  if (is.character(syntax))
-    syntax <- parse(text = syntax)
-  else
-    syntax <- as.expression(syntax)
+## This takes in a formula or list of them and processes them by:
+## 1. Interpreting the names. The list names are used over the left-hand side of
+##    formulas. If neither are given, "expr" is used.
+## 2. Long names and .() constructs are processed.
+convert.exprs <- function(exprs, data) {
+  ## A single formula is converted to a list containing it.
+  if (is(exprs, "formula"))
+    exprs <- list(exprs)
+
+  ## The validity of the inputs is checked.
+  if (!is.list(exprs) && all(sapply(exprs, inherits, "formula")))
+    stop("expected a list of formulas.")
+
+  ## The names are deduced.
+  has.lhs <- sapply(exprs, length) == 3
+  if (any(sapply(exprs[has.lhs], function(formula) !is.symbol(formula[[2]]))))
+    stop("left hand side of formulas should only be single symbols")
+  names <- convert.names(exprs)
+  has.names <- names != ""
+  if (any(has.names & has.lhs))
+    warning("both formula and list names given. formula names ignored.")
+  use.lhs <- !has.names & has.lhs
+  names[use.lhs] <- sapply(exprs[use.lhs], function(x) as.character(x[[2]]))
+
+  ## Removing the left hand side from the formulas.
+  exprs[has.lhs] <- lapply(exprs[has.lhs], `[`, c(1, 3))
+
+  ## The long names and .() constructs are processed.
+  lapply(exprs, eval.)
 }
 
-## convert.args is used to rename template args that make use of inputs names to include the long names.
-convert.args <- function(arg, renaming) UseMethod("convert.args")
-
-convert.args.attribute <- function(att, renaming) {
-  if (att %in% names(renaming))
-    set.class(renaming[[att]], "attribute")
-  else
-    att
+## This function takes in a list of expressions and substitutes the shorthand
+## names with the full names specified by schema.
+convert.shorthand <- function(exprs, schema) {
+  naming <- as.environment(setNames(lapply(schema, as.symbol), names(schema)))
+  exprs <- lapply(exprs, function(expr) {
+    eval(do.call("substitute", list(expr, naming)))
+  })
 }
 
-convert.args.default <- function(arg, renaming) arg
-
-convert.args.list <- function(list, renaming) lapply(list, convert.args, renaming)
-
-convert.args.mapping <- function(mapping, renaming) {
-  set.class(setNames(as.character(lapply(mapping, convert.args.attribute, renaming)), names(mapping)), "mapping")
+## This function is simply a helper function on top of convert.exprs to ensure
+## that the inputs only name attributes.
+convert.atts <- function(atts) {
+  result <- convert.exprs(atts)
+  if (!all(sapply(result, is.symbol)))
+    stop("expressions used instead of attributes.")
+  result
 }
 
-convert.args.Template <- function(template, renaming) {
-  template$args <- lapply(template$args, convert.args, renaming)
-  template
-}
-
-
-convert.exprs <- function(expressions, data, atts = NULL) UseMethod("convert.exprs")
-
-convert.exprs.default <- function(expressions, data, atts = NULL) {
-  convert.exprs(as.list(expressions), data, atts)
-}
-
-convert.exprs.if <- function(expressions, data, atts = NULL)
-  convert.exprs(list(expressions), data, atts)
-
-convert.exprs.call <- function(expressions, data, atts = NULL) {
-  if (is.call.to(expressions, "c"))
-    convert.exprs(as.list(expressions)[-1], data, atts)
-  else
-    convert.exprs(list(expressions), data, atts)
-}
-
-convert.exprs.list <- function(expressions, data, atts = NULL) {
-  if (length(expressions) == 0)
-    return(character())
-
-  ## Do evaluation of .() constructs now. Lazy evaluation is bad because re-binding.
-  expressions <- lapply(expressions, eval., data = data)
-
-  if (is.null(atts))
-    atts <- paste0("expr", (length(grokit$expressions) + 1):(length(grokit$expressions) + length(expressions)))
-  else if (length(atts) != length(expressions))
-    stop("in convert.exprs, atts must be the same length as expressions.")
-  grokit$expressions[atts] <- expressions
-  setNames(atts, names(expressions))
-}
-
-convert.exprs.name <- function(expressions, data, atts = NULL) {
-  if (expressions == "")
-    character()
-  else
-    convert.exprs(list(expressions), data, atts)
-}
-
-## This function takes previously constructed inputs, i.e a character vector
-## of names referenced in grokit$expressions, and re-converts them as if they
-## had been entered again into another waypoint.
-convert.inputs <- function(inputs) {
-  assert(is.inputs(inputs), "convert.inputs passed invalid inputs.")
-  convert.exprs(grokit$expressions[inputs])
+## This function takes previously constructed inputs and re-names them such that
+## they may be used in another waypoint.
+convert.inputs <- function(exprs) {
+  setNames(exprs, sapply(names(exprs), create.name, type = "input"))
 }
 
 ## Given inputs with a "names" attribute, this returns the names attribute.
 ## If null, the attribute is converted to a character vector with one empty
-## string per input. If no "names" attributes is present, it is treated as
+## string per element. If no "names" attributes is present, it is treated as
 ## null per the standard behavior of `attr`.
 convert.names <- function(inputs) {
   names <- names(inputs)
@@ -113,16 +65,10 @@ convert.names <- function(inputs) {
     names
 }
 
-convert.outputs <- function(names, update = TRUE) {
+convert.outputs <- function(names) {
   if (length(repeats <- which(duplicated(names))) != 0)
     stop("repeated column names: ", paste(names[repeats], collapse = ", "))
-  as.character(lapply(names, function(name) {
-    while (name %in% grokit$outputs)
-      name <- paste0("_", name)
-    if (update)
-      grokit$outputs <- c(grokit$outputs, name)
-    name
-  }))
+  sapply(names, create.name, type = "output")
 }
 
 ## This is used to treat a character vector of attributes name as inputs.
