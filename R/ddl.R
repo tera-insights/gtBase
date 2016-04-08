@@ -39,8 +39,8 @@ Create <- function(relation, ...) {
   types <- lapply(as.list(substitute(list(...)))[-1], convert.type)
   if (length(types) == 0)
     stop("schema cannot be empty")
-  schema <- names(types)
-  if (is.null(schema) || any(schema == ""))
+  schema <- convert.names(types)
+  if (any(schema == ""))
     stop("missing attribute names")
 
   piggy <- paste(Translate.Libraries(),
