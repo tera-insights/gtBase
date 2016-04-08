@@ -1,4 +1,4 @@
- #' Waypoint Construction
+#' Waypoint Construction
 #'
 #' These functions are responsible for constructing waypoints, the building
 #' blocks for every query.
@@ -30,41 +30,19 @@ Cache <- function(data) {
   cache
 }
 
-Transition <- function(gist, outputs, states) {
-  alias <- create.alias("gist")
-
-  schema <- setNames(convert.outputs(outputs), outputs)
-
-  if (is.data(states))
-    states <- list(states)
-
-  transition <- list(alias = alias, gist = gist, schema = schema, states = states)
-  class(transition) <- c("GIST", "data")
-  transition
-}
-
-Transform <- function(data, gt, inputs, outputs, states = NULL, overwrite = FALSE) {
+Filter <- function(data, gf, inputs = character(), states = NULL) {
   check.inputs(data, inputs)
 
-  alias <- create.alias("gt")
-
-  if (any(bad <- outputs %in% names(data$schema)) && !overwrite)
-    stop("cannot perform transform due to the following name clashes:\n",
-         paste0(outputs[bad], collapse = ", "))
-
-  outputs <- setNames(convert.outputs(outputs), outputs)
   schema <- data$schema
-  schema[names(outputs)] <- outputs
-
-  gt <- convert.args(gt, schema)
 
   if (is.data(states))
     states <- list(states)
 
-  transform <- list(data = data, alias = alias, gt = gt, inputs = inputs,
-                    schema = schema, states = states, outputs = outputs)
-  class(transform) <- c("GT", "data")
-  transform
+  alias <- create.alias("gf")
+  filter <- list(data = data, alias = alias, gf = gf, schema = schema,
+                 inputs = inputs, states = states)
+  class(filter) <- c("GF", "data")
+  filter
 }
 
 Generate <- function(data, ..., .overwrite = FALSE) {
@@ -89,7 +67,7 @@ Generate <- function(data, ..., .overwrite = FALSE) {
   generator
 }
 
-## schema should either be a character naming a relation or a named list of type objects
+## outputs should either be a character naming a relation or a named list of type objects
 Input <- function(files, gi, outputs, chunk = NULL) {
   assert(isTRUE(is.relation(outputs)) || is.list(outputs),
          "illegal outputs argument")
@@ -115,21 +93,6 @@ Input <- function(files, gi, outputs, chunk = NULL) {
   structure(list(files = files, alias = alias, gi = gi,
                  schema = schema, outputs = outputs, chunk = chunk),
             class = c("GI", "data"))
-}
-
-Filter <- function(data, gf, inputs = character(), states = NULL) {
-  check.inputs(data, inputs)
-
-  schema <- data$schema
-
-  if (is.data(states))
-    states <- list(states)
-
-  alias <- create.alias("gf")
-  filter <- list(data = data, alias = alias, gf = gf, schema = schema,
-                 inputs = inputs, states = states)
-  class(filter) <- c("GF", "data")
-  filter
 }
 
 #' Load a relation.
@@ -186,6 +149,43 @@ Load <- function(relation) {
 #' @rdname Load
 #' @usage Read(relation)
 Read <- Load
+
+Transition <- function(gist, outputs, states) {
+  alias <- create.alias("gist")
+
+  schema <- setNames(convert.outputs(outputs), outputs)
+
+  if (is.data(states))
+    states <- list(states)
+
+  transition <- list(alias = alias, gist = gist, schema = schema, states = states)
+  class(transition) <- c("GIST", "data")
+  transition
+}
+
+Transform <- function(data, gt, inputs, outputs, states = NULL, overwrite = FALSE) {
+  check.inputs(data, inputs)
+
+  alias <- create.alias("gt")
+
+  if (any(bad <- outputs %in% names(data$schema)) && !overwrite)
+    stop("cannot perform transform due to the following name clashes:\n",
+         paste0(outputs[bad], collapse = ", "))
+
+  outputs <- setNames(convert.outputs(outputs), outputs)
+  schema <- data$schema
+  schema[names(outputs)] <- outputs
+
+  gt <- convert.args(gt, schema)
+
+  if (is.data(states))
+    states <- list(states)
+
+  transform <- list(data = data, alias = alias, gt = gt, inputs = inputs,
+                    schema = schema, states = states, outputs = outputs)
+  class(transform) <- c("GT", "data")
+  transform
+}
 
 
 #' Basic Filtering of Waypoints
