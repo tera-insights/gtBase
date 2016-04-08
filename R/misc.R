@@ -14,9 +14,9 @@ extract.symbols <- function(expr) {
 
 . <- function(x) x
 
-long.name <- function(expr, data) {
+long.name <- function(expr, data, environment) {
   if (all(is.symbols(as.list(expr))))
-    if (!is.data(other <- eval(expr[[2]], .GlobalEnv)))
+    if (!is.data(other <- eval(expr[[2]], environment)))
       stop("invalid waypoint referenced: ", deparse(expr))
     else if (!(att <- as.character(expr[[3]])) %in% names(other$schema))
       stop("missing attribute referenced: ", deparse(expr))
@@ -28,7 +28,7 @@ long.name <- function(expr, data) {
     stop("attribute reference operator used incorrectly: ", deparse(expr))
 }
 
-eval. <- function(expr, data, envir = .GlobalEnv) {
+eval. <- function(expr, data, envir = attr(expr, ".Environment")) {
   if (is.call(expr))
     if (is.call.to(expr, "."))
       if (length(expr) != 2)
@@ -36,7 +36,7 @@ eval. <- function(expr, data, envir = .GlobalEnv) {
       else
         eval(expr[[2]], envir)
     else if (is.call.to(expr, "@")) ## Evaluating attribute reference
-      long.name(expr, data)
+      long.name(expr, data, envir)
     else
       as.call(lapply(expr, eval., data, envir))
   else
@@ -222,39 +222,6 @@ get.attributes <- function(relation) sapply(get.catalog(relation)$attributes, `[
 
 is.relation <- function(relation)
   relation %in% get.relations()
-
-## This function is used to simplify the process of processing the inputs and
-## outputs of the parent environment that calls it. Because it intercepts the
-## parser and evaluates statements in the parent environment, its usage is quite
-## risky and restrained. It should only be called by a function used to create a
-## waypoint that has arguments inputs and outputs.
-process.io <- function(i.def, o.def, names = T) {
-  if (eval.parent(quote(missing(inputs)))) {
-    inputs <- i.def
-  } else {
-    if (inherits(tryCatch(is.inputs(inputs)), "error")) {
-      inputs <- quote(inputs)
-      check.exprs(inputs)
-      inputs <- convert.exprs(inputs)
-    } else {
-      inputs <- convert.inputs(inputs)
-    }
-  }
-
-  if (missing(outputs)) {
-    outputs <- convert.names(inputs)
-    missing <- which(outputs == "")
-    exprs <- grokit$expressions[inputs[missing]]
-    if (all(is.symbols(exprs)))
-      outputs[missing] <- as.character(exprs)
-    else
-      stop("no name given for complex inputs:",
-           paste("\n\t", lapply(exprs, deparse), collapse = ""))
-  } else {
-    if (!is.null(names(inputs)))
-      warning("both outputs and named inputs given. outputs used.")
-    outputs <- convert.atts(quote(outputs))
-  }
 }
 
 ## Given a templated object, this function returns the string library::name,
