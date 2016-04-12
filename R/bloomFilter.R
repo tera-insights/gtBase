@@ -45,20 +45,17 @@
 #' agg <- BloomFilter(data, exponent = 24, inputs = l_partkey)
 #' result <- as.data.frame(agg)
 #' @author Jon Claus, \email{jonterainsights@@gmail.com}, Tera Insights, LLC.
-BloomFilter <- function(data, inputs, outputs, exponent = 16) {
+BloomFilter <- function(data, inputs, outputs = count, exponent = 16) {
   inputs <- substitute(inputs)
   check.exprs(inputs)
-  if (is.auto(inputs))
+  if (missing(inputs))
     inputs <- convert.schema(names(data$schema))
   else
     inputs <- convert.exprs(inputs)
 
   outputs <- substitute(outputs)
   check.atts(outputs)
-  if (is.auto(outputs))
-    stop("outputs is not allowed to be AUTO.")
-  else
-    outputs <- convert.atts(outputs)
+  outputs <- convert.atts(outputs)
   if (length(outputs) != 1)
     stop("There must be exactly one output specified.")
 
