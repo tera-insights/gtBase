@@ -71,3 +71,27 @@ GroupBy <- function(data, group, ..., fragment.size = 2000000, init.size = 1024,
 
   Aggregate(data, fun, inputs, outputs, states)
 }
+
+StreamingGroupBy <- function(data, group, aggregate) {
+  ## Storing and modifying the aggregate call.
+  aggregate <- substitute(aggregate)
+  aggregate$data <- substitute(data)
+  aggregate <- eval.parent(aggregate)
+
+  ## Converting the grouping expression.
+  group <- convert.exprs(substitute(group))
+  if (length(group) != 1)
+    stop("exactly 1 grouping expression should be given.")
+
+  ## Deducing name for the output column containing the grouping value.
+  output <- if(!is.null(names(group)))
+    names(group)[[1]]
+  else if (is.symbol(grokit$expressions[[group]]))
+    as.character(grokit$expressions[[group]])
+  else
+    stop("name not given for grouping column.")
+
+  ## The waypoint is created.
+  gt <- GT(Streaming_GroupBy, aggregate = aggregate$gla)
+  Transform(data, gt, c(group, aggregate$inputs), c(output, aggregate$schema))
+}
