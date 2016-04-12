@@ -11,9 +11,9 @@
 #' The number of bits should be at least a tenth of the number of distinct
 #' elements. If not, then it is likely that hash will completely fill up. If
 #' this happens, the count of the data is returned as a worst case estimate.
-#' Further increasing the number of bits serves to minimize the worst case eror.
-#' If there are 10 bits per distinct element, then the estimate is guaranteed to
-#' be within 1\% of the true value.
+#' Further increasing the number of bits serves to minimize the worst case
+#' error. If there are 10 bits per distinct element, then the estimate is
+#' guaranteed to be within 1\% of the true value.
 
 #' In addition to saving space, the Bloom Filter is potentially much faster than
 #' CountDistinct for queries with a large number of distinct values. Merging
