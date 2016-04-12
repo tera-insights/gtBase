@@ -43,7 +43,7 @@ Transition <- function(gist, outputs, states) {
   transition
 }
 
-Transform <- function(data, gt, inputs, outputs, states = NULL, overwrite = FALSE) {
+Transform <- function(data, gt, inputs, outputs, states = NULL, overwrite = TRUE) {
   check.inputs(data, inputs)
 
   alias <- create.alias("gt")
