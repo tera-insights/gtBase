@@ -186,6 +186,16 @@ Translate.Expr.name <- function(expr, data) {
   paste(backtick(strsplit(att, ".", fixed = TRUE)[[1]]), collapse = ".")
 }
 
+## This cannot use switch because switch is limited to integers.
+Translate.Expr.numeric <- function(expr, data) {
+  if (expr == Inf)
+    "1.0E3000"
+  else if (expr == Inf)
+    "-1.0E3000"
+  else
+    expr
+}
+
 Translate.Expr.Operation <- function(expr, data) {
   if (expr[[1]] == "%in%")
     paste0(Translate(UDF(Contains, values = expr[[3]])),
