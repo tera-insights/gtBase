@@ -27,7 +27,7 @@ Translate.GI <- function(data) {
              paste0("\n  FILE ", quotate(data$files), collapse = ""),
              "\nUSING",
              "\n", Translate(data$gi),
-             if (!is.null(data$chunk)) paste("\nCHUNKSIZE", data$chunk),
+             if (length(data$chunk)) paste("\nCHUNKSIZE", data$chunk),
              atts,
              ";\n"),
       data$alias)
