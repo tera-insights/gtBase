@@ -75,8 +75,12 @@ GroupBy <- function(data, group, ..., fragment.size = 2000000, init.size = 1024,
 StreamingGroupBy <- function(data, group, aggregate) {
   ## Storing and modifying the aggregate call.
   aggregate <- substitute(aggregate)
+  grokit.copy <- as.list(grokit)[c("alias", "outputs")]
   aggregate$data <- substitute(data)
   aggregate <- eval.parent(aggregate)
+  ## This replaces grokit with the previously made copy. This is done to avoid
+  ## generating unique names that aren't needed for this waypoint.
+  mapply(assign, names(grokit.copy), grokit.copy, MoreArgs = list(envir = grokit))
 
   ## Converting the grouping expression.
   group <- convert.exprs(substitute(group))
@@ -93,5 +97,5 @@ StreamingGroupBy <- function(data, group, aggregate) {
 
   ## The waypoint is created.
   gt <- GT(Streaming_GroupBy, aggregate = aggregate$gla)
-  Transform(data, gt, c(group, aggregate$inputs), c(output, aggregate$schema))
+  Transform(data, gt, c(group, aggregate$inputs), c(output, names(aggregate$schema)))
 }
