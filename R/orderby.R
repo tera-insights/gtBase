@@ -85,7 +85,7 @@ OrderBy <- function(data, ..., inputs, outputs) {
 }
 
 #' @rdname OrderBy
-OrderByMake <- function(..., limit = 0, rank = NULL, data) {
+OrderByMake <- function(..., limit = 0, rank = NULL, keep.ties = TRUE, data) {
   args <- as.list(substitute(list(...)))[-1]
   names <- names(args)
   ordering <- lapply(args, function(arg) {
@@ -104,6 +104,9 @@ OrderByMake <- function(..., limit = 0, rank = NULL, data) {
     stop("Directional specifiers must be either asc or dsc.",
          "The following are erroneous:\n",
          paste0("\t", subtract(directions, c("asc", "dsc")), collapse = "\n"))
+
+  if (!(is.logical(keep.ties) && length(keep.ties) == 1))
+    stop("keep.ties should be a single boolean value.")
 
   atts <- unlist(lapply(exprs, convert.exprs, data = data))
   directions <- as.list(directions)
@@ -131,12 +134,7 @@ OrderByMake <- function(..., limit = 0, rank = NULL, data) {
   if (!is.null(rank))
     class(rank) <- "attribute"
 
-  GLA <- GLA(
-      OrderBy,
-      order = directions,
-      limit = limit,
-      rank = rank
-      )
+  GLA <- GLA(OrderBy, order = directions, limit, rank, keep.ties)
 
   list(GLA = GLA,
        inputs = atts,
