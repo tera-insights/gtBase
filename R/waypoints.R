@@ -112,6 +112,10 @@ Input <- function(files, gi, outputs, chunk = NULL) {
 
   alias <- create.alias("gi")
 
+  if (!(is.null(chunk) || (is.numeric(chunk) && length(chunk) == 1 && chunk > 0)))
+    stop("chunk size should a single positive number.")
+  chunk <- as.integer(chunk)
+
   structure(list(files = files, alias = alias, gi = gi,
                  schema = schema, outputs = outputs, chunk = chunk),
             class = c("GI", "data"))
