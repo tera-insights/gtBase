@@ -93,3 +93,20 @@ Gather <- function(data, inputs, outputs) {
 
   Aggregate(data, GLA(Gather), inputs, outputs)
 }
+
+Hash <- function(data, keys, vals) {
+  keys <- convert.exprs(substitute(keys))
+  vals <- convert.exprs(substitute(vals))
+  inputs <- c(keys, vals)
+
+  outputs <- convert.names(inputs)
+  missing <- which(outputs == "")
+  exprs <- grokit$expressions[inputs[missing]]
+  if (all(is.symbols(exprs)))
+      outputs[missing] <- as.character(exprs)
+  else
+    stop("missing output names.")
+
+  gla <- GLA(Multi_Hash, split = length(keys))
+  Aggregate(data, gla, inputs, outputs)
+}
