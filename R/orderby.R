@@ -85,7 +85,7 @@ OrderBy <- function(data, ..., inputs, outputs) {
 }
 
 #' @rdname OrderBy
-OrderByMake <- function(..., limit = 0, rank = NULL, keep.ties = TRUE, data) {
+OrderByMake <- function(..., limit = 0, rank = NULL, keep.ties = FALSE, data) {
   args <- as.list(substitute(list(...)))[-1]
   names <- names(args)
   ordering <- lapply(args, function(arg) {
