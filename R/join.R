@@ -65,7 +65,7 @@ JoinSafe <- function(x, xJoin, y, yJoin, yPass = c()) {
   Transform(x, GT(Join), xJoin, outputs, list(right))
 }
 
-Gather <- function(data, inputs, outputs) {
+Gather <- function(data, inputs, outputs, init.size = 0) {
   if (missing(inputs)) {
     inputs <- convert.schema(names(data$schema))
   } else {
@@ -91,7 +91,7 @@ Gather <- function(data, inputs, outputs) {
   if (length(outputs) != length(inputs))
     stop("There must be exactly one output specified per input.")
 
-  Aggregate(data, GLA(Gather), inputs, outputs)
+  Aggregate(data, GLA(Gather, init.size), inputs, outputs)
 }
 
 Hash <- function(data, keys, vals) {
@@ -99,13 +99,7 @@ Hash <- function(data, keys, vals) {
   vals <- convert.exprs(substitute(vals))
   inputs <- c(keys, vals)
 
-  outputs <- convert.names(inputs)
-  missing <- which(outputs == "")
-  exprs <- grokit$expressions[inputs[missing]]
-  if (all(is.symbols(exprs)))
-      outputs[missing] <- as.character(exprs)
-  else
-    stop("missing output names.")
+  outputs <- "state"
 
   gla <- GLA(Multi_Hash, split = length(keys))
   Aggregate(data, gla, inputs, outputs)
