@@ -65,7 +65,7 @@ JoinSafe <- function(x, xJoin, y, yJoin, yPass = c()) {
   Transform(x, GT(Join), xJoin, outputs, list(right))
 }
 
-Gather <- function(data, inputs, outputs, init.size = 0) {
+Gather <- function(data, inputs, outputs, init.size = 0, use.array = FALSE) {
   if (missing(inputs)) {
     inputs <- convert.schema(names(data$schema))
   } else {
@@ -91,7 +91,7 @@ Gather <- function(data, inputs, outputs, init.size = 0) {
   if (length(outputs) != length(inputs))
     stop("There must be exactly one output specified per input.")
 
-  Aggregate(data, GLA(Gather, init.size), inputs, outputs)
+  Aggregate(data, GLA(Gather, init.size, use.array), inputs, outputs)
 }
 
 Hash <- function(data, keys, vals) {
