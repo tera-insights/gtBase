@@ -59,7 +59,7 @@ JoinSafe <- function(x, xJoin, y, yJoin, yPass = c()) {
          paste("\n\t", lapply(exprs, deparse), collapse = ""))
 
   split <- length(yJoin)  ## The template argument for the Hash
-  gla <- GLA(Multi_Hash, split = split)
+  gla <- GLA(Multi_Hash, split)
   right <- Aggregate(y, gla, c(yJoin, yPass), character())
 
   Transform(x, GT(Join), xJoin, outputs, list(right))
