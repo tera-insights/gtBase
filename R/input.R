@@ -343,7 +343,7 @@ ReadCSV <- function(files, attributes, header = FALSE, skip = 0, nrows = -1,
     line.symbol <- convert.atts(substitute(line.number))
     if (length(line.symbol) > 1)
       stop("ReadCSV: line.number contains more than one column name.")
-    line.column <- setNames(list(convert.types(quote(base::Int))), line.symbol)
+    line.column <- setNames(list(convert.types(quote(base::UInt))), line.symbol)
     attributes <- c(line.column, attributes)
   }
   line.number <- !missing(line.number)
