@@ -129,10 +129,8 @@ OrderByMake <- function(..., limit = 0, rank = NULL, keep.ties = FALSE, data) {
     check.atts(rank)
     rank <- convert.atts(rank)
     names <- c(rank, names)
-  }
-
-  if (!is.null(rank))
     class(rank) <- "attribute"
+  }
 
   GLA <- GLA(OrderBy, order = directions, limit, rank, keep.ties)
 
