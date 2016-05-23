@@ -127,6 +127,10 @@
 #'   Any other format results in an error.
 #'
 #'   Currently only the (1) format of the list is supported.
+#' @param line.number If given, this should be a symbol encoding a valid column
+#'   name. The line number is put into this column, starting at 1. This is done
+#'   independently across multiple files, meaning multiple rows could share the
+#'   same line number in such a case.
 #' @param MoreArgs A list of additional arguments to pass to an inner call to
 #'   \code{\link{read.table}}. This call is used to read in a partial table,
 #'   which is used for various checks as well as determining column names and
@@ -151,8 +155,8 @@
 #' @author Jon Claus, <jonterainsights@@gmail.com>, Tera Insights, LLC.
 ReadCSV <- function(files, attributes, header = FALSE, skip = 0, nrows = -1,
                     sep = ",", simple = FALSE, quote = '"', escape = "\\",
-                    trim.cr = FALSE, nullable = FALSE, MoreArgs = list(),
-                    chunk = NULL, check = TRUE) {
+                    trim.cr = FALSE, nullable = FALSE, line.number,
+                    MoreArgs = list(), chunk = NULL, check = TRUE) {
   ## Various checks, warning, and processing for each argument.
   assert(is.character(files) && length(files) > 0,
          "files should be a character vector specifying the file path(s).")
@@ -334,17 +338,26 @@ ReadCSV <- function(files, attributes, header = FALSE, skip = 0, nrows = -1,
   if (all(names(nullable) == ""))
     names(nullable) <- NULL
 
+  ## The line.number argument is processed.
+  if (!missing(line.number)) {
+    line.symbol <- convert.atts(substitute(line.number))
+    if (length(line.symbol) > 1)
+      stop("ReadCSV: line.number contains more than one column name.")
+    line.column <- setNames(list(convert.types(quote(base::Int))), line.symbol)
+    attributes <- c(line.column, attributes)
+  }
+  line.number <- !missing(line.number)
+
   alias <- create.alias("read")
 
   ## gi <- GI(base::CSVReader,
-  ##          skip = skip + header, n = nrows, sep = sep, simple = simple,
-  ##          quote = quote, escape = escape, trim.cr = trim.cr, nullable = nullable)
+  ##          skip = skip + header, n = nrows, sep, simple, quote, escape,
+  ##          trim.cr, nullable, line.number)
 
   ## Conditional arguments are only done because the piggy parse can't handle "\\".
   ## TODO: Change this back to the above code once escape characters work.
   gi <- GI(base::CSVReader,
-           skip = skip + header, n = nrows, sep = sep, simple = simple,
-           trim.cr = trim.cr, nullable = nullable)
+           skip = skip + header, n = nrows, sep, simple, trim.cr, nullable, line.number)
   if (!missing(quote))
     gi$args$quote <- quote
   if (!missing(escape))
