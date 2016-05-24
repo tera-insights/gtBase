@@ -1,4 +1,4 @@
-Segmenter <- function(data, segment, passes = 1, num.segments = 64) {
+Segmenter <- function(data, segment, passes = 1, segments = 64, inner.prefer.fragment = FALSE) {
   if (!is(data, "GLA"))
     stop("Segment must be placed on top of an aggregate waypoint.")
   if (missing(segment))
@@ -11,6 +11,6 @@ Segmenter <- function(data, segment, passes = 1, num.segments = 64) {
   segment <- convert.exprs(segment)
   data$inputs <- c(segment, data$inputs)
 
-  data$gla <- GLA(Segmenter, passes = passes, segments = num.segments, GLA = data$gla)
+  data$gla <- GLA(Segmenter, passes, segments, inner.prefer.fragment, GLA = data$gla)
   data
 }
