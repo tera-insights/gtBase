@@ -32,7 +32,7 @@ Multiplexer <- function(data, ...) {
 MultiplexerMake <- function(..., data) {
   aggs <- as.list(substitute(list(...)))[-1]
   values <- if (is.null(names(aggs))) rep("", length(aggs)) else names(aggs)
-  aggs <- mapply(MultiplexerItem, aggs, values, MoreArgs = list(data = data), SIMPLIFY = FALSE)
+  aggs <- unname(mapply(MultiplexerItem, aggs, values, MoreArgs = list(data = data), SIMPLIFY = FALSE))
 
   inputs <- as.character(unlist(lapply(aggs, `[[`, "inputs")))
   check.inputs(data, inputs)
