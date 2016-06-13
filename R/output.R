@@ -135,6 +135,8 @@ Store <- function(data, relation, ..., .overwrite = FALSE) {
     ischar <- FALSE
   if (!ischar)
     relation <- as.character(substitute(relation))
+  if (missing(relation))
+    stop("Store: no relation given.")
   assert(is.character(relation) && length(relation) == 1,
          "'relation' should be a name or a length-one character vector")
   assert(is.relation(relation),
@@ -142,25 +144,26 @@ Store <- function(data, relation, ..., .overwrite = FALSE) {
 
   schema <- get.attributes(relation)
 
-  pgy <- tempfile("Q", fileext = ".pgy")
-  overwrite <- if (.overwrite) " OVERWRITE" else ""
-
   atts <- substitute(c(...))
   names <- names(atts)[-1]
   check.atts(atts)
   atts <- convert.atts(atts)
 
+  ## The relation columns not explicitly named in the store command.
+  missing <- substract(schema, names)
+
   if (length(atts) != 0 && (is.null(names) || any(names == "")))
     stop("missing attribute names")
   if (any(bad <- names %nin% schema))
-    stop("relation attributes not found: ", paste(bad, collapse = ", "))
+    stop("relation attributes not found: ", paste(names[bad], collapse = ", "))
   if (any(bad <- atts %nin% names(data$schema)))
-    stop("data attributes not found: ", paste(bad, collapse = ", "))
-  if (any(bad <- subtract(schema, names) %nin% names(data$schema)))
-    stop("relation attributes not filled: ", paste(schema[bad], collapse = ", "))
+    stop("data attributes not found: ", paste(atts[bad], collapse = ", "))
+  if (any(bad <- !(missing %in% names(data$schema))))
+    stop("relation attributes not filled: ", paste(missing[bad], collapse = ", "))
 
-  atts <- c(atts, subtract(schema, names))
-  names <- c(names, subtract(schema, names))
+  ## The missing columns have the same names in both the data and the relation.
+  atts <- c(atts, missing)
+  names <- c(names, missing)
 
   waypoints <- Translate(Process(data, list()))
   waypoints <- waypoints[order(match(names(waypoints), grokit$waypoints))]
@@ -170,11 +173,12 @@ Store <- function(data, relation, ..., .overwrite = FALSE) {
                   paste0("\n\t", backtick(relation), ".", backtick(names), " = ",
                          lapply(atts, Translate.Expr.name, data),
                          collapse = ","),
-                  "\nINTO ", relation, overwrite, ";\n")
+                  "\nINTO ", relation, if (.overwrite) " OVERWRITE", ";\n")
 
   piggy <- paste0(Translate.ID(), Translate.Libraries(), "\n",
                   paste(c(waypoints, store), collapse = "\n"))
 
+  pgy <- tempfile("Q", fileext = ".pgy")
   cat(piggy, file = pgy)
   if (getOption("show.piggy", TRUE))
     cat(gsub("\t", "  ", piggy))
