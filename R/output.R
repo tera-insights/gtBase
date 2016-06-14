@@ -150,13 +150,13 @@ Store <- function(data, relation, ..., .overwrite = FALSE) {
   atts <- convert.atts(atts)
 
   ## The relation columns not explicitly named in the store command.
-  missing <- substract(schema, names)
+  missing <- setdiff(schema, names)
 
   if (length(atts) != 0 && (is.null(names) || any(names == "")))
     stop("missing attribute names")
-  if (any(bad <- names %nin% schema))
+  if (any(bad <- !(names %in% schema)))
     stop("relation attributes not found: ", paste(names[bad], collapse = ", "))
-  if (any(bad <- atts %nin% names(data$schema)))
+  if (any(bad <- !(atts %in% names(data$schema))))
     stop("data attributes not found: ", paste(atts[bad], collapse = ", "))
   if (any(bad <- !(missing %in% names(data$schema))))
     stop("relation attributes not filled: ", paste(missing[bad], collapse = ", "))
