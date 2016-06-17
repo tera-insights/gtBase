@@ -1,7 +1,7 @@
 ## If inner.GLA is given, then it should be a call specifying another waypoint
 ## but without a data argument. Otherwise, the data given is taken to a GLA
 ## waypoint and the Segmenter is placed on top of it.
-Segmenter <- function(data, segment, passes = 1, segments = 64, inner.prefer.fragment = FALSE, inner.GLA) {
+Segmenter <- function(data, segment, passes = 1, segments = 64, fragment = TRUE, inner.GLA) {
   if (!missing(inner.GLA)) {
     inner.GLA <- substitute(inner.GLA)
     inner.GLA[["data"]] <- data
@@ -19,6 +19,6 @@ Segmenter <- function(data, segment, passes = 1, segments = 64, inner.prefer.fra
   segment <- convert.exprs(segment)
   data$inputs <- c(segment, data$inputs)
 
-  data$gla <- GLA(Segmenter, passes, segments, inner.prefer.fragment, GLA = data$gla)
+  data$gla <- GLA(Segmenter, passes, segments, inner.prefer.fragment = fragment, GLA = data$gla)
   data
 }
