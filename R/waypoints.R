@@ -30,6 +30,13 @@ Cache <- function(data) {
   cache
 }
 
+Cache <- function(data) {
+  alias <- create.alias(paste0("compact", "_", base.name(data$alias)))
+  waypoint <- list(alias = alias, data = data, schema = data$schema)
+  class(waypoint) <- c("Compact", class(data))
+  waypoint
+}
+
 Transition <- function(gist, outputs, states) {
   alias <- create.alias("gist")
 

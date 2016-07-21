@@ -3,14 +3,41 @@ Translate.Cache <- function(data) {
   c(Translate(data$data), setNames(piggy, data$alias))
 }
 
-Translate.Load <- function(data) {
-  loading <- paste("LOAD", data$relation, "AS", data$alias)
-  if (!is.null(data$cluster)) {
-    range <- as.numeric(grokit$cluster[[data$cluster]][1:2])
-    clustering <- paste("\nFILTER RANGE", paste(ifelse(is.finite(range), range, "NULL"), collapse = ", "))
-  }
+Translate.Compact <- function(data) {
+  piggy <- paste0(data$alias, " = COMPACT ", data$data$alias, ";\n")
+  c(Translate(data$data), setNames(piggy, data$alias))
+}
 
-  setNames(paste0(loading, if (!is.null(data$cluster)) clustering, ";\n"), data$alias)
+Translate.Filter <- function(filter) {
+  update.clustering(grokit$expressions[[filter$condition]], filter$data)
+  c(Translate(filter$data),
+    setNames(
+        paste0(filter$alias, " = FILTER ", filter$data$alias, " BY",
+               "\n\t", Translate.Expr(grokit$expressions[[filter$condition]], filter$data),
+               ";\n"),
+        filter$alias))
+}
+
+Translate.Generated <- function(generator) {
+  c(Translate(generator$data),
+    setNames(
+        paste0(generator$alias, " = FOREACH ", generator$data$alias, " GENERATE",
+               paste0("\n\t", Translate.Inputs(generator$generated, generator$data), collapse = ","),
+               ";\n"),
+        generator$alias))
+}
+
+Translate.GF <- function(gf) {
+  c(unlist(lapply(gf$states, Translate)), Translate(gf$data),
+    setNames(
+        paste0(gf$alias, " = FILTER ", gf$data$alias, " BY",
+               "\n", Translate(gf$gf),
+               if (length(gf$states) > 0)
+               paste0("\nREQUIRES", paste0("\n\t", lapply(gf$states, `[[`, "alias"), collapse = ",")),
+               if (length(gf$inputs) > 0)
+               paste0("\nUSING", paste0("\n\t", Translate.Inputs(gf$inputs, gf$data), collapse = ",")),
+               ";\n"),
+        gf$alias))
 }
 
 Translate.GI <- function(data) {
@@ -33,17 +60,17 @@ Translate.GI <- function(data) {
       data$alias)
 }
 
-Translate.Join <- function(join) {
-  c(Translate(join$x), Translate(join$y),
+Translate.GIST <- function(gist) {
+  c(unlist(lapply(gist$states, Translate)),
     setNames(
-        paste0(join$alias, " = JOIN\n",
-               "\t", join$x$alias, " BY (",
-               paste0(lapply(join$xSchema, Translate.Expr.name, join$x), collapse = ", "),
-               ")", ",\n",
-               "\t", join$y$alias, " BY (",
-               paste0(lapply(join$ySchema, Translate.Expr.name, join$y), collapse = ", "),
-               ")", ";\n"),
-        join$alias))
+        paste0(gist$alias, " =",
+               "\n", Translate(gist$gist),
+               if (length(gist$states) > 0)
+               paste0("\nREQUIRES", paste0("\n\t", lapply(gist$states, `[[`, "alias"), collapse = ",")),
+               if (length(gist$schema) > 0)
+               paste0("\nAS", paste0("\n\t", Translate.Outputs(gist$schema), collapse = ",")),
+               ";\n"),
+        gist$alias))
 }
 
 Translate.GLA <- function(gla) {
@@ -62,19 +89,6 @@ Translate.GLA <- function(gla) {
         gla$alias))
 }
 
-Translate.GIST <- function(gist) {
-  c(unlist(lapply(gist$states, Translate)),
-    setNames(
-        paste0(gist$alias, " =",
-               "\n", Translate(gist$gist),
-               if (length(gist$states) > 0)
-               paste0("\nREQUIRES", paste0("\n\t", lapply(gist$states, `[[`, "alias"), collapse = ",")),
-               if (length(gist$schema) > 0)
-               paste0("\nAS", paste0("\n\t", Translate.Outputs(gist$schema), collapse = ",")),
-               ";\n"),
-        gist$alias))
-}
-
 Translate.GT <- function(gt) {
   c(unlist(lapply(gt$states, Translate)), Translate(gt$data),
     setNames(
@@ -91,34 +105,25 @@ Translate.GT <- function(gt) {
         gt$alias))
 }
 
-Translate.GF <- function(gf) {
-  c(unlist(lapply(gf$states, Translate)), Translate(gf$data),
+Translate.Join <- function(join) {
+  c(Translate(join$x), Translate(join$y),
     setNames(
-        paste0(gf$alias, " = FILTER ", gf$data$alias, " BY",
-               "\n", Translate(gf$gf),
-               if (length(gf$states) > 0)
-               paste0("\nREQUIRES", paste0("\n\t", lapply(gf$states, `[[`, "alias"), collapse = ",")),
-               if (length(gf$inputs) > 0)
-               paste0("\nUSING", paste0("\n\t", Translate.Inputs(gf$inputs, gf$data), collapse = ",")),
-               ";\n"),
-        gf$alias))
+        paste0(join$alias, " = JOIN\n",
+               "\t", join$x$alias, " BY (",
+               paste0(lapply(join$xSchema, Translate.Expr.name, join$x), collapse = ", "),
+               ")", ",\n",
+               "\t", join$y$alias, " BY (",
+               paste0(lapply(join$ySchema, Translate.Expr.name, join$y), collapse = ", "),
+               ")", ";\n"),
+        join$alias))
 }
 
-Translate.Filter <- function(filter) {
-  update.clustering(grokit$expressions[[filter$condition]], filter$data)
-  c(Translate(filter$data),
-    setNames(
-        paste0(filter$alias, " = FILTER ", filter$data$alias, " BY",
-               "\n\t", Translate.Expr(grokit$expressions[[filter$condition]], filter$data),
-               ";\n"),
-        filter$alias))
-}
+Translate.Load <- function(data) {
+  loading <- paste("LOAD", data$relation, "AS", data$alias)
+  if (!is.null(data$cluster)) {
+    range <- as.numeric(grokit$cluster[[data$cluster]][1:2])
+    clustering <- paste("\nFILTER RANGE", paste(ifelse(is.finite(range), range, "NULL"), collapse = ", "))
+  }
 
-Translate.Generated <- function(generator) {
-  c(Translate(generator$data),
-    setNames(
-        paste0(generator$alias, " = FOREACH ", generator$data$alias, " GENERATE",
-               paste0("\n\t", Translate.Inputs(generator$generated, generator$data), collapse = ","),
-               ";\n"),
-        generator$alias))
+  setNames(paste0(loading, if (!is.null(data$cluster)) clustering, ";\n"), data$alias)
 }
