@@ -124,40 +124,59 @@ RunQuery <- function(piggy, pgy, err) {
 }
 
 Store <- function(data, relation, ..., .overwrite = FALSE) {
+  ## Basic error handl
   if (!inherits(data, "data"))
     stop("data must be a data object.")
   if (exists("grokit.jobid"))
     stop("Store is not allowed to be called from the web interface.")
 
+  ## The data is compacted immediately prior to the store. This is because the
+  ## Store does not check if a tuple is turned off. The compacter fixes this by
+  ## creating new chunks containing only tuples that are turned on.
+  data <- Compact(data)
+
+  ## A relation must be specified.
+  if (missing(relation))
+    stop("Store: no relation given.")
+
+  ## The relation can either be specified as a character or as a symbol. It is
+  ## converted to a character regardless.
   ischar <- tryCatch(is.character(relation) && length(relation) == 1,
                      error = identity)
   if (inherits(ischar, "error"))
     ischar <- FALSE
   if (!ischar)
     relation <- as.character(substitute(relation))
-  if (missing(relation))
-    stop("Store: no relation given.")
   assert(is.character(relation) && length(relation) == 1,
          "'relation' should be a name or a length-one character vector")
+
+  ## If the specified relation does not exist, an error is thrown.
   assert(is.relation(relation),
          "invalid relation given: ", deparse(relation))
 
+  ## The following behavior matches the attributes in the input data to those in
+  ## the specified relation.
   schema <- get.attributes(relation)
 
+  ## The user-specified matchings are processed.
   atts <- substitute(c(...))
   names <- names(atts)[-1]
   check.atts(atts)
   atts <- convert.atts(atts)
 
-  ## The relation columns not explicitly named in the store command.
+  ## These are the relation columns not explicitly matched by the user.
   missing <- setdiff(schema, names)
 
+  ## If the user specifies attributes, the argument names must be given.
   if (length(atts) != 0 && (is.null(names) || any(names == "")))
     stop("missing attribute names")
+  ## Argument names for a given matching must be a valid relation attribute.
   if (any(bad <- !(names %in% schema)))
     stop("relation attributes not found: ", paste(names[bad], collapse = ", "))
+  ## The values for the given matchings must be attributes in the data.
   if (any(bad <- !(atts %in% names(data$schema))))
     stop("data attributes not found: ", paste(atts[bad], collapse = ", "))
+  ## Any relation attribute not specified must match a short name in the data.
   if (any(bad <- !(missing %in% names(data$schema))))
     stop("relation attributes not filled: ", paste(missing[bad], collapse = ", "))
 
@@ -165,9 +184,11 @@ Store <- function(data, relation, ..., .overwrite = FALSE) {
   atts <- c(atts, missing)
   names <- c(names, missing)
 
+  ## The query creating the input data is tranlated to PIGGY.
   waypoints <- Translate(Process(data, list()))
   waypoints <- waypoints[order(match(names(waypoints), grokit$waypoints))]
 
+  ## The PIGGY command for the Store statement is created.
   store <- paste0("STORE ", data$alias,
                   "\nAS",
                   paste0("\n\t", backtick(relation), ".", backtick(names), " = ",
@@ -175,15 +196,18 @@ Store <- function(data, relation, ..., .overwrite = FALSE) {
                          collapse = ","),
                   "\nINTO ", relation, if (.overwrite) " OVERWRITE", ";\n")
 
+  ## The entire PIGGY query is composed.
   piggy <- paste0(Translate.ID(), Translate.Libraries(), "\n",
                   paste(c(waypoints, store), collapse = "\n"))
 
+  ## The PIGGY file is written to a file and ran.
   pgy <- tempfile("Q", fileext = ".pgy")
   cat(piggy, file = pgy)
   if (getOption("show.piggy", TRUE))
     cat(gsub("\t", "  ", piggy))
   code <- system2("grokit", args = c("-w run", pgy))
 
+  ## The various error codes are processed.
   if (code == 1)
     stop("There is already a query in progress. Unable to run at this time.")
   else if (code != 0)
