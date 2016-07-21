@@ -161,7 +161,7 @@ Translate.Expr.Date <- function(expr, data) gsub(" 0", " ", format(expr, "DATE(%
 
 Translate.Expr.POSIXlt <- Translate.Expr.POSIXct <- function(expr, data) as.integer(expr)
 
-Translate.Expr.default <- function(expr, data) expr
+Translate.Expr.default <- function(expr, data) quotate(as.character(expr))
 
 Translate.Expr.if <- function(expr, data) {
   if (length(expr) != 4)
