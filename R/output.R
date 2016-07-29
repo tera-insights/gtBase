@@ -124,7 +124,7 @@ RunQuery <- function(piggy, pgy, err) {
 }
 
 Store <- function(data, relation, ..., .overwrite = FALSE) {
-  ## Basic error handl
+  ## Basic error handling.
   if (!inherits(data, "data"))
     stop("data must be a data object.")
   if (exists("grokit.jobid"))
