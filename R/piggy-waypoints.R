@@ -108,7 +108,7 @@ Translate.GT <- function(gt) {
 Translate.Join <- function(join) {
   c(Translate(join$x), Translate(join$y),
     setNames(
-        paste0(join$alias, " = JOIN\n",
+        paste0(join$alias, " =", if(join$left.outer) " LEFT OUTER", " JOIN\n",
                "\t", join$x$alias, " BY (",
                paste0(lapply(join$xSchema, Translate.Expr.name, join$x), collapse = ", "),
                ")", ",\n",

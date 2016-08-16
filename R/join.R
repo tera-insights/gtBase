@@ -1,4 +1,4 @@
-Join <- function(x, xAtts, y, yAtts) {
+Join <- function(x, xAtts, y, yAtts, left.outer = FALSE) {
   xAtts <- substitute(xAtts)
   yAtts <- substitute(yAtts)
   check.atts(xAtts)
@@ -39,7 +39,8 @@ Join <- function(x, xAtts, y, yAtts) {
   schema <- c(visible, setNames(invisible, make.unique(names(invisible), names(c(visible, invisible)), TRUE)))
 
   alias <- create.alias("join")
-  join <- list(alias = alias, schema = schema, x = x, y = y, xSchema = xAtts, ySchema = yAtts)
+  join <- list(alias = alias, schema = schema, x = x, y = y, xSchema = xAtts, ySchema = yAtts,
+               left.outer = left.outer)
   class(join) <- c("Join", "data")
   join
 }
