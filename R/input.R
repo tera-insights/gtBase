@@ -366,14 +366,17 @@ ReadCSV <- function(files, attributes, header = FALSE, skip = 0, nrows = -1,
   Input(files, gi, attributes)
 }
 
-as.data <- function(data, types) {
+## row.names: whether to convert row.names to a column of strings.
+## TODO: currently, the column is just titled "Names" with no other option. change this.
+as.data <- function(data, types, row.names = FALSE) {
   if (!is.data.frame(data))
     data <- as.data.frame(data)
 
   file <- tempfile("DF-", fileext = ".csv")
-  write.table(data, file, quote = FALSE, sep = "\t", row.names = FALSE, col.names = FALSE)
+  write.table(data, file, quote = FALSE, sep = "\t", row.names = row.names, col.names = FALSE)
   class(file) <- c("file")
 
+  ## Putting together the type information waypoint.
   if (missing(types))
     types <- as.list(data)
   else
@@ -382,7 +385,13 @@ as.data <- function(data, types) {
 
   attributes <- setNames(types, names(data))
 
-  gi <- GI(base::CSVReader, skip = 0, simple = TRUE, sep = "tab")
+  ## Prepending the row.names information as needed.
+  if (row.names && "Names" %in% names(data))
+    stop("row.names can not be enabled for data with names column")
+  if (row.names)
+    attributes <- c(list(Names = TYPE(string)), attributes)
+
+  gi <- GI(base::CSVReader, skip = 0, sep = "tab")
 
   Input(file, gi, attributes)
 }
