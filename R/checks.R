@@ -32,3 +32,22 @@ check.schema <- function(x, schema) {
   if (any(bad <- !(schema) %in% names(x$schema)))
     stop("missing attributes: ", paste(schema[bad], collapse = ", "))
 }
+
+check.choices <- function(choices, allowed) {
+  if (!is.call.to(choices, "c"))
+    stop("Incorrect coice specification: ", deparse(choices))
+  if (!is.call.to(allowed, "c"))
+    stop("Incorrect list of allowed choices: ", deparse(allowed))
+  
+  c <- as.list(choices)[-1];
+  a <- as.list(allowed)[-1];
+  # check for duplicates in choices
+  if (anyDuplicated(c) != 0)
+    stop("Duplicated choices not allowed: ", deparse(choices))
+  if (anyDuplicated(a) != 0)
+    stop("Duplicated allowed choices not allowed: ", deparse(allowed))
+  # check that all choices appear in allowed
+  if (length(setdiff(c,a)) != 0)
+    stop("Choices not on allowed list. Choices: ", deparse(choices), 
+      "Allowed: ", deparse(allowed))
+}
